@@ -219,7 +219,7 @@ system("R CMD SHLIB model.c")
 dyn.load("model.so")
 
 f = 200
-K = 15000000
+K = 250000
 H = 1600000
 # We create a vector with the constant parameters.
 parms = c(f,K,H)

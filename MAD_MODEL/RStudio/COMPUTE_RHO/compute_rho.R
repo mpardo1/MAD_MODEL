@@ -11,12 +11,12 @@ libraries("gdata", "ggExtra","ggplot2", "numbers","tidyverse","data.table","mult
 
 
 # Different path for MAc and Ubuntu.
-PC = "/Users/celsaaraujobarja/Documents"
+# PC = "/Users/celsaaraujobarja/Documents"
 #PC = "/home/marta/Documentos"
 ##### UPLOAD REGISTRATION FILE ###### STEP 1
 # Data with registration for BCN taken from age distribution time series, filter by age 0.
-Path_reg = "/PHD/2021/SUR_Model/Code/data/ages_days_bcn.csv"
-Path_reg = paste(PC,Path_reg, sep="")
+Path_reg = "~/MAD_MODEL/MAD_MODEL/data/ages_days_bcn.csv"
+# Path_reg = paste(PC,Path_reg, sep="")
 
 registration = read.csv(Path_reg)
 registration <- registration %>% filter( registration$age_days == 0)
@@ -41,18 +41,21 @@ downloads_bcn <- t(registration)
 
 reg_plot <- merge(registration,df_date, by ="time")
 ggplot(reg_plot) + 
-  geom_line(aes(x = date, y= N), color = "darkblue")+
+  geom_line(aes(x = date.x, y= N), color = "darkblue")+
   ylab("Number of new users") +
+  xlab("date") +
   scale_color_manual(values = c('#9E329F')) +
-  theme(text = element_text(size=16))
+  theme_bw()+
+  theme(text = element_text(size=16))+
+  ggtitle("Registration time series Barcelona")
 # Save FILE with DOWNLOADS DATA, A(t) en el modelo. This file will be save with registration.dat name.
-write.dat(downloads_bcn, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/")
+# write.dat(downloads_bcn, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/")
 
 #### Data of participation from the simulation in C#####  STEP 2
 PC_1 = "/Users/celsaaraujobarja"
 #PC_1 = "/home/marta"
-Path = "/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_bcn_2000_ages.data"
-Path = paste(PC_1,Path, sep="")
+Path = "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_bcn_2000_ages.data"
+# Path = paste(PC_1,Path, sep="")
 
 # Mac PATH
 #Path = "/Users/celsaaraujobarja/Documents/PhD/Output_Int/Output_Integration.dat"
@@ -63,7 +66,8 @@ int_sol_fil <- reshape2::melt(int_sol_fil, id.vars = c("X1"))
 int_sol_fil$age_class <-as.numeric(sub('.','',int_sol_fil$variable))
 ggplot(int_sol_fil) +
   geom_point(aes(age_class,value)) +
-  transition_time(X1)
+  transition_time(X1)+
+  theme_bw()
 
 # write.dat(int_sol[1:20,1:20], "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/")
 # write.dat(int_sol, "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/")
@@ -87,14 +91,16 @@ scale_x_date(date_breaks = "6 month",
 geom_line(aes( colour = variable)) +
 ylab("Counts") +
 scale_color_manual(values = c('#9E329F','#1642FE'))+
-  ggtitle("Participation dynamics")
+  ggtitle("Participation dynamics")+
+  theme_bw()
 
 ggplot(df_plot,aes(date, value)) +
   scale_x_date(date_breaks = "6 month",
                date_labels = "%b %y") +
   geom_line(aes( colour = variable)) +
   scale_color_manual(values = c('#9E329F','#1642FE')) +
-  ggtitle("Participation dynamics")
+  ggtitle("Participation dynamics")+
+  theme_bw()
 # Number of participants age 1 vs registration.
 df_aux <- int_sol[,c("X1","X2")]
 colnames(df_aux) <- c("time","Age 1")
@@ -106,7 +112,8 @@ ggplot(df_plot,aes(time, value)) +
   ylab("Number of participants") +
 #  xlim(0,10) +
   scale_color_manual(values=c('#1642FE','#9E329F')) +
-  scale_linetype_manual(values = c("solid", "dotted"))
+  scale_linetype_manual(values = c("solid", "dotted"))+
+  theme_bw()
 
 
 ##### Moving Average #####
@@ -136,12 +143,13 @@ ggplot(df_sum) +
                date_labels = "%b %y", 
                limits = as.Date(c("2018-05-01","2020-12-01"))) +
   ylab("Moving average")  +
-  ggtitle("Sumation of age classes")
+  ggtitle("Sumation of age classes")+
+  theme_bw()
   
 
 ##### REPORTS UPLOAD ###### STEP 3
-Path = "/PHD/2021/SUR_Model/Code/data/a000_mosquito_alert_spatio_temporal_data_D_mod_df.Rds"
-Path = paste(PC,Path, sep="")
+Path = "~/MAD_MODEL/MAD_MODEL/data/a000_mosquito_alert_spatio_temporal_data_D_mod_df.Rds"
+# Path = paste(PC,Path, sep="")
 
 reports = read_rds(Path) %>% filter(presence==TRUE)
 reports$date= as.Date(reports$date,"%Y-%m-%d") 
@@ -170,10 +178,13 @@ ggplot(report_fil) +
   geom_line(aes(date, n)) +
   #xlim(0,400) +
   xlab("Date") + 
-  ylab("Number of Tiger Mosquito reports") +
+  ylab("Counts") +
   scale_x_date(date_breaks = "6 month",
                date_labels = "%b %y")+
-  theme(text = element_text(size=16))
+  scale_color_manual(values = c('#32329f')) +
+  theme_bw()+
+  theme(text = element_text(size=16))+
+  ggtitle("Tiger mosquito reports to MA in Barcelona")
 
 
 
@@ -204,23 +215,26 @@ ggplot(report_fil) +
 
 ###### PROPENSITY PROBABILITY UPLOAD#######
 #Path_prop = "/Users/celsaaraujobarja/Documents/PhD/Output_Int/propensity_predictions.csv"
-Path_prop= "/PHD/2021/SUR_Model/Code/data/propensity_predictions.csv"
-Path_prop = paste(PC,Path_prop, sep="")
+Path_prop= "~/MAD_MODEL/MAD_MODEL/data/propensity_predictions.csv"
+# Path_prop = paste(PC,Path_prop, sep="")
 
 prop_mat = read.csv(Path_prop)
 
 # File .dat of propensity probabilities.
 prop_vec <- t(prop_mat[,4])
-write.dat(prop_vec, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC")
+# write.dat(prop_vec, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC")
 
 min_prop = min(prop_mat[,4])
 max_prop = max(prop_mat[,4])
 ggplot(prop_mat)+ 
   geom_line(aes(x =participation_time_days, y = reporting_prob))+
-  theme(text = element_text(size=16))+
-  scale_x_continuous(breaks = round(seq(min_prop, max_prop, by = 250),1))+
+  # scale_x_continuous(breaks = round(seq(min_prop, max_prop, by = 250),1))+
   xlab("Participants age")+
-  ylab("Propensity probability")
+  ylab("Probability")+
+  scale_color_manual(values = c('#9E329F')) +
+  theme_bw()+
+  theme(text = element_text(size=16))+
+  ggtitle("Propensity probability")
 # Plot propensity probability.
 prop_mat$group <- 0
 prop_mat$group[prop_mat$participation_time_days<=100]  <- "FIRST" 
@@ -236,7 +250,7 @@ ggplot(prop_mat) +
   ylab("Probability of reporting")+
   scale_x_continuous(breaks = round(seq(min_prop, max_prop, by = 100),1)) +
   scale_color_manual(values=c('#FF00F6','#FF2C00','#00FF5E','#0092F6'))+
-  theme(text = element_text(size=16))
+  theme(text = element_text(size=16)) + theme_bw()
 
 # Checking the sumation of the different age groups. 
 mat_sim = as.matrix(int_sol)
@@ -258,14 +272,15 @@ df_plot <- merge(df_plot, df_date, by = "time")
 # Plot to check which age group is increasing with the total sum and registered.
 ggplot(df_plot,aes(date, value)) +
   geom_line(aes( colour = variable))  +
-  scale_x_date(date_breaks = "6 month",
+  scale_x_date(date_breaks = "10 month",
                date_labels = "%b %y")  +
   ylab("Counts") + ggtitle("Participation dynamics") +
   scale_color_manual(name = "",
                      labels = c("[1:100]","[100:500]",
                                 "[500:950]","[950:1385]", "Total","Registered"),
                      values=c('#FF00F6','#FF2C00','#00FF5E','#0092F6', '#000000','#2F7D9F'))+
-  theme(text = element_text(size=16))
+  theme(text = element_text(size=16)) +
+  theme_bw()
 
 # Plot with the registration dynamics.
 df_sum <- data.frame(time = int_sol[,1], 
@@ -275,13 +290,14 @@ df_plot <- merge(df_plot, df_date, by = "time")
 
 ggplot(df_plot,aes(date, value)) +
   geom_line(aes( colour = variable))  +
-  scale_x_date(date_breaks = "6 month",
+  scale_x_date(date_breaks = "10 month",
                date_labels = "%b %y")  +
   ylab("Counts") + ggtitle("Participation dynamics") +
   scale_color_manual(name = "",
                      labels = c("Registered"),
                      values=c('#2F7D9F'))+
-  theme(text = element_text(size=16))
+  theme(text = element_text(size=16))+
+  theme_bw()
 
 # Plot withn the registration dynamics, and the age groups.
 df_sum <- data.frame(time = int_sol[,1], 
@@ -296,16 +312,17 @@ df_plot <- merge(df_plot, df_date, by = "time")
 
 ggplot(df_plot,aes(date, value)) +
   geom_line(aes( colour = variable))  +
-  scale_x_date(date_breaks = "6 month",
+  scale_x_date(date_breaks = "10 month",
                date_labels = "%b %y")  +
   ylab("Counts") + ggtitle("Participation dynamics") +
   scale_color_manual(name = "",
                      labels = c("[1:100]","[100:500]",
                                 "[500:950]","[950:1385]","Registered"),
                      values=c('#FF00F6','#FF2C00','#00FF5E','#0092F6','#2F7D9F'))+
-  theme(text = element_text(size=16))
+  theme(text = element_text(size=16))+
+  theme_bw()
 
-write.dat(prop_mat[1:20,c(1,4)], "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/")
+# write.dat(prop_mat[1:20,c(1,4)], "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/")
 # Remove unused variables.
 
 rm(reg_group)
@@ -370,12 +387,12 @@ df_input_date$date <- NULL
 df_input_date$a.x <- NULL
 df_input_date$a.y <- NULL
 df_input_date <- df_input_date[,c("time","N","rho")]
-write.dat(t(df_input_date), "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/")
+# write.dat(t(df_input_date), "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/")
 
 df_rho$rho.X1 <- NULL
 colnames(df_rho) <- c("time","rho","date")
 df_rho <- t(df_rho)
-write.dat(df_rho, "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/")
+# write.dat(df_rho, "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/")
 
 df_rho <- data.frame(time = vec, rho = t(rho), den = t(den))
 df_merg <- reshape2::melt(df_rho, id.vars = "time")
@@ -383,11 +400,15 @@ df_merg <- reshape2::melt(df_rho, id.vars = "time")
 # Plot rho and denominator.
 ggplot(df_merg,aes(time, value)) + 
   geom_line(aes( colour = variable))  +
-  scale_color_manual(values=c('#9E329F','#1642FE'))
+  scale_color_manual(values=c('#9E329F','#1642FE'))+
+  theme_bw() +theme(text = element_text(size=16))+
+  ggtitle("Registration time series Barcelona")
 
 ggplot(df_rho) + 
   geom_line(aes(time, den))  +
-  scale_color_manual(values=c('F5329F','#1642FE'))
+  scale_color_manual(values=c('F5329F','#1642FE'))+
+  theme_bw() +theme(text = element_text(size=16))+
+  ggtitle("Registration time series Barcelona")
 
 
 df_rho$smooth_rho <- smooth(df_rho$rho)
@@ -397,18 +418,23 @@ df_tot <- merge(df_rho, reports, by="time")
 ggplot(df_tot) + 
   geom_line(aes(date, smooth_rho))  +
   scale_x_date(date_breaks = "6 month",date_labels = "%b %y") +
-  ylab("rho(A,t)")
+  ylab(expression(rho))+
+  theme_bw()
 
 # Plot rho(M,t) smooth.
 ggplot(df_tot) + 
   geom_line(aes(date,rho))  +
   scale_x_date(date_breaks = "6 month",date_labels = "%b %y") +
-  ylab("rho(A,t)")
+  ylab(expression(rho))+
+  theme_bw()+theme(text = element_text(size=16))+
+  ggtitle("Encounter per human capita simulation")
 
 ggplot(df_tot) + 
   geom_line(aes(date, n_smooth)) +
   scale_x_date(date_breaks = "6 month",date_labels = "%b %y")+
-  ylab("Number of reports")
+  ylab("Number of reports")+
+  theme_bw()+theme(text = element_text(size=18))+
+  ggtitle("Registration time series Barcelona")
 
 
 # Moving average to rho:
@@ -421,11 +447,12 @@ ggplot(df_rho_mov) +
   geom_line(aes(date, rho))  +
   scale_x_date(date_breaks = "3 month",date_labels = "%b %y") +
   ylab(expression(rho))+
-  theme(text = element_text(size=14))
+  theme(text = element_text(size=14))+
+  theme_bw()
 
 ###### Upload data from bgtraps.######
-Path = '/PHD/2021/SUR_Model/Code/data/bcn_bgcount_time_profile.csv'
-Path = paste(PC,Path, sep="")
+Path = '~/MAD_MODEL/MAD_MODEL/data/bcn_bgcount_time_profile.csv'
+# Path = paste(PC,Path, sep="")
 
 bg_traps <- read.csv(Path)
 bg_traps$date <- as.Date(bg_traps$date,'%Y-%m-%d') 
@@ -436,7 +463,8 @@ bg_traps$prop <- bg_traps$value/pop_density
 ggplot(bg_traps) + 
   geom_line(aes(date, density))  +
   scale_x_date(date_breaks = "6 month",date_labels = "%b %y") +
-  ylab("Number of mosquito adults per human (BG estimation)")
+  ylab("Number of mosquito adults per human (BG estimation)") +
+  theme_bw()
 
 l = length(bg_traps$prop)
 dt = 7
@@ -447,7 +475,8 @@ df_bg_mov <- data.frame(date = bg_traps$date, bg_counts = mov)
 ggplot(df_bg_mov) + 
   geom_line(aes(date, bg_counts))  +
   scale_x_date(date_breaks = "6 month",date_labels = "%b %y") +
-  ylab("Adults mosquitoes per square meter")
+  ylab("Adults mosquitoes per square meter") +
+  theme_bw()
 
 l = length(bg_traps$prop)
 dt = 7
@@ -511,8 +540,8 @@ linear_mod <- lm(df_tot$rho~df_tot$mov_bg_count)
 summary(linear_mod)
 #-----------------------------------------------------------------------------------------------
 #########RHO OBSERVED#############
-Path_reg = "/PHD/2021/SUR_Model/Code/data/ages_days_bcn.csv"
-Path_reg = paste(PC,Path_reg, sep="")
+Path_reg = "~/MAD_MODEL/MAD_MODEL/data/ages_days_bcn.csv"
+# Path_reg = paste(PC,Path_reg, sep="")
 
 ages =  read.csv(Path_reg)
 # Convert to data type date the registration time.

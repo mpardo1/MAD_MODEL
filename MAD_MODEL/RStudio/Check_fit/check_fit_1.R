@@ -11,13 +11,13 @@ library("readxl")
 library(reshape)
 library(viridis)
 
-Path = "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_final_fit.data"
+Path = "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_final_fit.data"
 int_sol_2 = data.frame(t(read.table(Path, header=FALSE)))
 
 #### UPLOAD PARTICIPATION FILE #####
 # Data of participation.
 # Spain DATA:
-Path_ages = "/home/marta/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/ages_days.csv"
+Path_ages = "~/MAD_MODEL/MAD_MODEL/RStudio/Fitting/data/ages_days.csv"
 # Barcelona DATA:
 #Path_ages = "/home/marta/Documentos/SUR Model/Code/RStudio/Fitting/data/ages_days_bcn.csv"
 # Mac PATH
@@ -32,7 +32,7 @@ ages$age_days = ages$age_days + 1
 
 ####UPLOAD REGISTRATION FILE ######
 # Data with registration date with hour and minute and registration ID.
-Path_reg = "/home/marta/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/register_data_tigausers.csv"
+Path_reg = "~/MAD_MODEL/MAD_MODEL/RStudio/Fitting/data/register_data_tigausers.csv"
 # Mac PATH
 #Path_users = "/Users/celsaaraujobarja/Documents/PhD/SUR Model/Code/RStudio/Fitting/data/register_data_tigausers.csv"
 registration = read.csv(Path_reg)
@@ -61,7 +61,7 @@ reg_group_sort$n = reg_group_sort$n.y
 reg_group_sort$n.x <- NULL
 reg_group_sort$n.y <- NULL
 # Save FILE with DOWNLOADS DATA, A(t) en el modelo.
-write.dat(reg_group_sort, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/")
+# write.dat(reg_group_sort, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/")
 
 
 ###### PROCESS PARTICIPATION.DAT ########
@@ -85,9 +85,9 @@ for(i in c(1:dim_l)){
 }
 mat_ages[1,] = c(0:dim)
 length = length(mat_ages[1,])-2
-###### SAVE FILE OBESERVED DATA-#########
-write.dat(mat_ages[c(1:length),c(1:length)], "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION")
-write.dat(mat_ages, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION")
+# ###### SAVE FILE OBESERVED DATA-#########
+# write.dat(mat_ages[c(1:length),c(1:length)], "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION")
+# write.dat(mat_ages, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION")
 
 ######  STANDARD DEVIATION #######
 
@@ -103,7 +103,8 @@ df_sd <- data.frame(ages = vec_ages, sd = vec_sd)
 ggplot(df_sd) + 
   geom_line(aes(ages,sd)) +
   xlab("Age of the participants set") + 
-  ylab("Standard deviation")
+  ylab("Standard deviation") +
+  theme_bw()
 
 # All ages from the second one (fist one removed).
 l = length(mat_ages[1,])
@@ -117,7 +118,8 @@ df_sd <- data.frame(ages = vec_ages, sd = vec_sd)
 ggplot(df_sd) + 
   geom_line(aes(ages,sd)) +
   xlab("Age of the participants set") + 
-  ylab("Standard deviation")
+  ylab("Standard deviation")+
+  theme_bw()
 
 
 mat_diff <- mat_ages[2,] - mat_ages[1,]
@@ -125,7 +127,8 @@ df_sd <- data.frame(ages = vec_ages, sd = vec_sd)
 ggplot(df_sd) + 
   geom_line(aes(ages,sd)) +
   xlab("Age of the participants set") + 
-  ylab("Standard deviation")
+  ylab("Standard deviation")+
+  theme_bw()
 
 
 
@@ -149,8 +152,8 @@ rm(mat_ages_1)
 ###### UPLOAD INTEGRATION FILES ######
 # Data of participation.
 Path = "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_final_fit.data"
-Path = "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration.dat"
-
+# Path = "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration.dat"
+# 
 # Mac PATH
 #Path = "/Users/celsaaraujobarja/Documents/PhD/Output_Int/Output_Integration.dat"
 int_sol = data.frame(t(read.table(Path, header=FALSE)))
@@ -215,8 +218,9 @@ ggplot(df_plot,aes(Time, value)) +
   geom_line(aes( colour = variable))  +
   labs(title = "One day old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
-  theme(text = element_text(size=20)) + 
-  ylab("Number of participants")
+  ylab("Number of participants")+
+  theme_bw()+
+  theme(text = element_text(size=16)) 
 
 rm(df_plot)
 rm(df_aux)
@@ -230,7 +234,9 @@ ggplot(df_plot,aes(Time, value)) +
   labs(title = "25 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
-  ylab("Number of participants")
+  ylab("Number of participants")+
+  theme_bw()+
+  theme(text = element_text(size=16)) 
 
 # Second Age group:
 df_aux <- df_join[,c("X1","X36.y","X36.x")]
@@ -242,7 +248,9 @@ ggplot(df_plot,aes(Time, value)) +
   labs(title = "36 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
-  ylab("Number of participants")
+  ylab("Number of participants")+
+  theme_bw()+
+  theme(text = element_text(size=16)) 
 
 rm(df_plot)
 rm(df_aux)
@@ -256,7 +264,9 @@ ggplot(df_plot,aes(Time, value)) +
   labs(title = "61 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
-  ylab("Number of participants")
+  ylab("Number of participants")+
+  theme_bw()+
+  theme(text = element_text(size=16)) 
 
 # Third Age group:
 df_aux <- df_join[,c("X1","X62.y","X62.x")]
@@ -268,7 +278,9 @@ ggplot(df_plot,aes(Time, value)) +
   labs(title = "1730 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
-  ylab("Number of participants")
+  ylab("Number of participants")+
+  theme_bw()+
+  theme(text = element_text(size=16)) 
 
 rm(df_plot)
 rm(df_aux)
@@ -282,7 +294,9 @@ ggplot(df_plot,aes(Time, value)) +
   labs(title = "1748 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
-  ylab("Number of participants")
+  ylab("Number of participants")+
+  theme_bw()+
+  theme(text = element_text(size=16)) 
 ###### PLOTS AGE DISTRIBUTION ######
 
 #mat_fil_t = data.frame(t(mat_fil[c(1:31),c(2:32)]))
