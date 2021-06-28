@@ -3,11 +3,13 @@ library(easypackages)
 libraries("gdata", "ggplot2", "numbers","tidyverse","data.table","multiplex","reshape","viridis","stats","ggpubr","ggstatsplot","e1071","mlr3misc","deSolve", "gganimate") 
 
 # Different path for MAc and Ubuntu.
-PC = "/Users/celsaaraujobarja/Documents"
+# PC = "/Users/celsaaraujobarja/Documents"
+# PC = "/Users/celsaaraujobarja/Documents"
 #PC = "/home/marta/Documentos"
 #Path= "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/df_rho.dat"
-Path_rel= "/PHD/2021/SUR_Model/Code/OUTPUT/df_rho.dat"
-Path = paste(PC,Path_rel, sep="")
+# Path_rel= "/PHD/2021/SUR_Model/Code/OUTPUT/df_rho.dat"
+# Path = paste(PC,Path_rel, sep="")
+Path = "~/MAD_MODEL/VECTOR_MODEL/data/df_rho.dat"
 df_rho <- data.frame(t(read.table(Path, header=FALSE)))
 colnames(df_rho) <- c("time", "rho", "date")
 df_rho$date = as.Date(df_rho$date , "%Y-%m-%d")
@@ -18,8 +20,8 @@ ggplot(df_rho) +
   ggtitle("Encounter rate computed from Citizen Science model") +
   theme_bw()
 # Temperatures from Barcelona:
-Path_temp = "/PHD/2021/Mosquito_model/data/bcn_weather_daily.Rds"
-Path_temp = paste(PC,Path_temp, sep="")
+Path_temp = "~/MAD_MODEL/VECTOR_MODEL/data/bcn_weather_daily.Rds"
+# Path_temp = paste(PC,Path_temp, sep="")
 
 temp <-read_rds(Path_temp)
 temp$date = as.Date(temp$date , "%Y-%m-%d")
@@ -43,7 +45,8 @@ df_predict <- data.frame(temp_val, predict_gono)
 
 ggplot(df_predict, aes(temp_val, predict_gono)) +
   geom_line()+
-  geom_point(data = df_gono_data, aes(x = temp_vec, y =dur_gono))
+  geom_point(data = df_gono_data, aes(x = temp_vec, y =dur_gono))+
+  theme_bw()
 
 int = quadratic_mod$coefficients[1]
 beta = quadratic_mod$coefficients[2]
@@ -113,17 +116,27 @@ df_gonot_vec <- data.frame(temp = vec, gonot =unlist(lapply(vec,gonot)))
 df_dL_vec <- data.frame(temp = vec, dL = unlist(lapply(vec,d_L)))
 df_deltaL_vec <- data.frame(temp = vec, deltaL = unlist(lapply(vec,delta_L)))
 df_deltaA_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,delta_A)))
-df_dl_opt_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,dL_opt)))
+# df_dl_opt_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,dL_opt)))
 
-ggplot(df_gonot_vec) + geom_line(aes(temp,gonot)) + ggtitle("Inverse of the Gonotrophic cycle")
+ggplot(df_gonot_vec) + geom_line(aes(temp,gonot)) + 
+  ggtitle("Inverse of the Gonotrophic cycle")+
+  theme_bw()
 
-ggplot(df_dL_vec) + geom_line(aes(temp,dL)) + ggtitle("Larva development rate")
+ggplot(df_dL_vec) + geom_line(aes(temp,dL)) +
+  ggtitle("Larva development rate")+
+  theme_bw()
 
-ggplot(df_deltaL_vec) + geom_line(aes(temp,deltaL)) + ggtitle("Larva mortality rate")
+ggplot(df_deltaL_vec) + geom_line(aes(temp,deltaL)) +
+  ggtitle("Larva mortality rate")+
+  theme_bw()
 
-ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) + ggtitle("Mosquito adult mortality rate")
+ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) +
+  ggtitle("Mosquito adult mortality rate")+
+  theme_bw()
 
-ggplot(df_dl_opt_vec) + geom_line(aes(temp,deltaA)) + ggtitle("Mosquito adult mortality rate")
+ggplot(df_dl_opt_vec) + geom_line(aes(temp,deltaA)) +
+  ggtitle("Mosquito adult mortality rate")+
+  theme_bw()
 
 
 # Compute the values of the functions/forcings with temp.
@@ -161,13 +174,25 @@ df_deltaA_out <- df_deltaA_out %>% filter( df_deltaA_out$time >= 0)
 df_rho$time = as.numeric(df_rho$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
 df_rho <- df_rho %>% filter( df_rho$time >= 0)
 
-ggplot(df_gonot_out) + geom_line(aes(date,gono)) + ggtitle("Gonotrophic cycle")
+ggplot(df_gonot_out) +
+  geom_line(aes(date,gono)) +
+  ggtitle("Gonotrophic cycle")+
+  theme_bw()
 
-ggplot(df_dL_out) + geom_line(aes(date,dL)) + ggtitle("Larva development rate")
+ggplot(df_dL_out) +
+  geom_line(aes(date,dL)) +
+  ggtitle("Larva development rate")+
+  theme_bw()
 
-ggplot(df_deltaL_out) + geom_line(aes(date,deltaL)) + ggtitle("Larva mortality rate")
+ggplot(df_deltaL_out) +
+  geom_line(aes(date,deltaL)) +
+  ggtitle("Larva mortality rate")+
+  theme_bw()
 
-ggplot(df_deltaA_out) + geom_line(aes(date,deltaA)) + ggtitle("Adult mosquito mortality rate")
+ggplot(df_deltaA_out) +
+  geom_line(aes(date,deltaA)) +
+  ggtitle("Adult mosquito mortality rate")+
+  theme_bw()
 
 df_gonot_out$date <- NULL
 df_gonot_out <- df_gonot_out[,c(2,1)]
@@ -186,15 +211,15 @@ df_rho <- df_rho[,c(2,1)]
 # library.dynam.unload("deSolve", libpath=paste(.libPaths()[1], "//deSolve", sep=""))
 # library.dynam("deSolve", package="deSolve", lib.loc=.libPaths()[1])
 # OJOOOOO!!! Cuando cambias de PC borrar .o y .so.
-Path = "/PHD/2021/Mosquito_model/Code/"
-Path = paste(PC,Path, sep="")
+Path = "~/MAD_MODEL/VECTOR_MODEL/Code/"
+# Path = paste(PC,Path, sep="")
 
 setwd(Path)
 system("R CMD SHLIB model.c")
 dyn.load("model.so")
 
 f = 200
-K = 15000000
+K = 250000
 H = 1600000
 # We create a vector with the constant parameters.
 parms = c(f,K,H)
@@ -234,6 +259,7 @@ ggplot(df_plot_1,aes(date, value))  +
                      labels = c("Larva", "Adult mosquito"),
                      values=c('#FF00F6','#FF2C00'))+
   theme_bw() 
+
 ggplot(df_Ah)  +
   geom_line(aes(date, y3), color = "dark green") +
   ylab("Counts") +
