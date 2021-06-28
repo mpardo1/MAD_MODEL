@@ -1,0 +1,253 @@
+---
+title: "Vector model"
+author: "Marta Pardo Araujo"
+date: "8/6/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Vector model dynamics
+
+In this code we will integrate the vector model:
+```{=latex}
+ \begin{eqnarray}
+\frac{dL}{dt} & = &a f A^{(h)} \left(1- \frac{L}{K}\right) - d_L L - \delta_L L\\
+\frac{dA}{dt} & = & -\rho(A) H + d_L L - \delta_A A_\\
+\frac{dA^{(h)} }{dt} & = & \rho(A)  H  - a A^{(h)}  - \delta_A A^{(h)}
+\end{eqnarray}
+
+```
+with the forcing impose by the citizen science model, $\rho(M)$, the number of mosquitoes encounter per human:
+```{=latex}
+\begin{equation}
+        \rho(M,\bigtriangleup t) = \frac{1}{ \sum_{i=0}^n p_i(R|e)P_i(\bigtriangleup t)} \frac{\bigtriangleup R}{\bigtriangleup t},
+    \end{equation}
+```
+First we set the path and compile the C code with the adult mosquito model.
+```{r, include=FALSE}
+rm(list = ls())
+library(easypackages)
+libraries("gdata", "ggplot2", "numbers","tidyverse","data.table","multiplex","reshape","viridis","stats","ggpubr","ggstatsplot","e1071","mlr3misc","deSolve", "gganimate") 
+Path = "/home/marta/Documentos/PHD/2021/Mosquito_model/Code/"
+setwd(Path)
+system("R CMD SHLIB model.c")
+dyn.load("model.so")
+```
+  First, we read the input data:
+```{r}
+# Rho,mosquito encounter per human capita rate:
+Path= "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/df_rho.dat"
+df_rho <- data.frame(t(read.table(Path, header=FALSE)))
+colnames(df_rho) <- c("time", "rho", "date")
+df_rho$date = as.Date(df_rho$date , "%Y-%m-%d")
+df_rho$time <- NULL
+df_rho$rho <- as.numeric(df_rho$rho)
+ggplot(df_rho) + 
+  geom_line(aes(x = date, y =rho)) +
+  ggtitle("Encounter rate computed from Citizen Science model") 
+  
+
+```
+We compute the functional response along the period of computation for the temperatures given in this period. We will set the temperature to the mean temperature between five meteorological station in Barcelona each day.
+```{r}
+# Temperatures from Barcelona:
+Path_temp = "/home/marta/Documentos/PHD/2021/Mosquito_model/data/bcn_weather_daily.Rds"
+temp <-read_rds(Path_temp)
+temp$date = as.Date(temp$date , "%Y-%m-%d")
+temp <- temp %>%  group_by(date) %>% summarise(mean_temp = mean(valor))
+
+ggplot(temp) +
+   geom_line(aes(date, mean_temp))+
+  ggtitle("Mean temperature Barcelona") + 
+  xlab("Mean temperature")
+```
+We will do a fit of the gonotrophic cycle, from the data obtain in Delate et al "Influence of Temperature on Immature Development" .
+```{=latex}
+\centering
+\begin{tabular}{||c c ||} 
+ \hline
+Temperature (ºC) & Mean value \\ [0.5ex] 
+ \hline\hline
+ 20 & 6.7\\ 
+ \hline
+25 & 4\\ 
+ \hline
+ 30 & 2.9\\ 
+  \hline
+ 35& 4.7
+ \\ [1ex] 
+ \hline
+\end{tabular}
+```
+```{r, message=FALSE}
+
+temp_vec = c(20,25,30,35)
+dur_gono = c(6.7,4,2.9,4.7)
+temp_vec2 <- temp_vec^2
+quadratic_mod <- lm(dur_gono ~ temp_vec + temp_vec2)
+temp_val <- seq(0,40,1)
+predict_gono <- predict(quadratic_mod, list(temp_vec=temp_val, temp_vec2<- temp_val^2))
+df_gono_data <- data.frame(temp_vec, dur_gono)
+df_predict <- data.frame(temp_val, predict_gono)
+
+ggplot(df_predict, aes(temp_val, predict_gono)) +
+   geom_line()+
+  geom_point(data = df_gono_data, aes(x = temp_vec, y =dur_gono))
+
+int = quadratic_mod$coefficients[1]
+beta = quadratic_mod$coefficients[2]
+beta2 = quadratic_mod$coefficients[3]
+int
+beta
+beta2
+# Gonotrophic cycle
+gonot <- function(T){
+  a = beta2*T^2+beta*T+int
+  val = min(1,1/a)
+  return(val)
+}
+
+# Development rate
+d_L <- function(T){
+  val = 0.1727*exp(-((T-28.40)/10.20)^2)
+  return(val)
+}
+
+# Larva mortality rate
+delta_L <- function(T){
+  a = abs(-0.1305*T^2+3.868*T+30.83)
+  val = min(1, 1/a)
+  return(val)
+}
+
+# Adult mosquito mortality rate
+delta_A <- function(T){
+  a = abs(-0.1921*T^2+8.147*T-22.98)
+  val =  min(1, 1/a)
+  return(val)
+}
+```
+There are a few parameters on the model depending on temperature, i.e., those parameters are:
+```{=latex}
+\begin{enumerate}
+  \item The duration of the gonotrophic cycle:
+  $$a = 41.105 - 2.617*T + 0.045 * T^2$$
+  \item Larva development rate:
+  $$d_L = 0.1727*\exp(-((T-28.40)/10.20)ˆ2)$$
+  \item Larva mortality rate:
+  $$\delta_L = \mathrm{min}\left(1, \frac{1}{|-0.1305*Tˆ2+3.868*T+30.83|}\right)$$
+  \item Adult mosquito mortality rate:
+  $$\delta_L = \mathrm{min}\left(1, \frac{1}{|-0.1921*Tˆ2+8.147*T-22.98|}\right)$$
+\end{enumerate}
+```
+
+```{r}
+vec = seq(0,40,1)
+df_gonot_vec <- data.frame(temp = vec, gonot =unlist(lapply(vec,gonot)))
+df_dL_vec <- data.frame(temp = vec, dL = unlist(lapply(vec,d_L)))
+df_deltaL_vec <- data.frame(temp = vec, deltaL = unlist(lapply(vec,delta_L)))
+df_deltaA_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,delta_A)))
+
+ggplot(df_gonot_vec) + geom_line(aes(temp,gonot)) + ggtitle("Inverse of the Gonotrophic cycle")
+
+ggplot(df_dL_vec) + geom_line(aes(temp,dL)) + ggtitle("Larva development rate")
+
+ggplot(df_deltaL_vec) + geom_line(aes(temp,deltaL)) + ggtitle("Larva mortality rate")
+
+ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) + ggtitle("Mosquito adult mortality rate")
+
+
+```
+Now we compute the data frames for the functional responses of the mosquito.
+```{r}
+# Compute the values of the functions/forcings with temp.
+# Compute the minimum date of the rho:
+min_rho_date <- min(df_rho$date)
+# DFs with the date and value of the parameter at that time.
+gono = unlist(lapply(temp$mean_temp,gonot))
+df_gonot_out <- data.frame(date = temp$date, gono)
+
+ref_date <- max(min(df_rho$date), min(df_gonot_out$date))
+df_gonot_out$time = as.numeric(df_gonot_out$date - as.Date(ref_date,"%Y-%m-%d") , units="days") 
+df_gonot_out <- df_gonot_out %>% filter( df_gonot_out$time >= 0)
+
+df_dL_out <- data.frame(date = temp$date, dL = unlist(lapply(temp$mean_temp,d_L)))
+df_dL_out$time = as.numeric(df_dL_out$date - as.Date(ref_date,"%Y-%m-%d") , units="days") 
+df_dL_out <- df_dL_out %>% filter( df_dL_out$time >= 0)
+
+df_deltaL_out <- data.frame(date = temp$date, deltaL = unlist(lapply(temp$mean_temp,delta_L)))
+df_deltaL_out$time = as.numeric(df_deltaL_out$date - as.Date(ref_date,"%Y-%m-%d") , units="days") 
+df_deltaL_out <- df_deltaL_out %>% filter( df_deltaL_out$time >= 0)
+
+df_deltaA_out <- data.frame(date = temp$date, deltaA = unlist(lapply(temp$mean_temp,delta_A)))
+df_deltaA_out$time = as.numeric(df_deltaA_out$date - as.Date(ref_date,"%Y-%m-%d") , units="days") 
+df_deltaA_out <- df_deltaA_out %>% filter( df_deltaA_out$time >= 0)
+
+df_rho$time = as.numeric(df_rho$date - as.Date(ref_date,"%Y-%m-%d") , units="days") 
+df_rho <- df_rho %>% filter( df_rho$time >= 0)
+```
+```{r}
+ggplot(df_gonot_out) + geom_line(aes(date,gono)) + ggtitle("Gonotrophic cycle")
+
+ggplot(df_dL_out) + geom_line(aes(date,dL)) + ggtitle("Larva development rate")
+
+ggplot(df_deltaL_out) + geom_line(aes(date,deltaL)) + ggtitle("Larva mortality rate")
+
+ggplot(df_deltaA_out) + geom_line(aes(date,deltaA)) + ggtitle("Adult mosquito mortality rate")
+
+df_gonot_out$date <- NULL
+df_gonot_out <- df_gonot_out[,c(2,1)]
+df_dL_out$date <- NULL
+df_dL_out <- df_dL_out[,c(2,1)]
+df_deltaL_out$date <- NULL
+df_deltaL_out <- df_deltaL_out[,c(2,1)]
+df_deltaA_out$date <- NULL
+df_deltaA_out <- df_deltaA_out[,c(2,1)]
+df_rho$date <- NULL
+df_rho <- df_rho[,c(2,1)]
+```
+  
+  After checking if the functional response for the tiger mosquito does make sense, we use them to integrate the mosquito model. For that we will choose a carrying capacity K of 250.000 and a fecundity rate equal to one over the number of eggs per oviposition. We will set the number of eggs to 100. Other constant parameter will be the number of people in Barcelona, H, we will set it to 1600000.
+  
+```{r}
+f = 100
+K = 250000
+H = 1600000
+# We create a vector with the constant parameters.
+parms = c(f,K,H)
+# We set the initial conditions to cero.
+Y <- c(y1 = 1000.0, y2 = 10.0, y3 = 10.0)
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(df_gonot_out),
+                  data.matrix(df_dL_out),
+                  data.matrix(df_deltaL_out),
+                  data.matrix(df_rho),
+                  data.matrix(df_deltaA_out))
+min_t <- min(df_rho$time)
+max_t <- max(df_rho$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = forcs_mat, fcontrol = list(method = "constant"))
+
+ode_df <- data.frame(out) 
+ode_df$Sum <- NULL
+df_plot <- reshape2::melt(ode_df, id.vars = c("time"))
+#df_plot$value[which(df_plot$variable == "y2")] <- 1
+ggplot(df_plot,aes(time, value))  +
+  geom_line(aes( colour = variable)) +
+  ylab("Counts") +
+  ggtitle("Participation dynamics")+
+  scale_color_manual(name = "",
+                     labels = c("Larva", "Adult mosquito","Handling mosquito"),
+                     values=c('#FF00F6','#FF2C00','#00FF5E'))
+```
+  
+  

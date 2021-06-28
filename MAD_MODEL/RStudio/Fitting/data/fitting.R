@@ -1,0 +1,10 @@
+rm(list = ls())
+library(gdata) 
+library(segmented)
+library(e1071)
+library(ggplot2)
+library(optimx)
+library(zoom)
+library(deSolve)
+library(mrbsizeR)
+
