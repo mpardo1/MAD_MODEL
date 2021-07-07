@@ -46,8 +46,9 @@ ggplot(reg_plot) +
   xlab("date") +
   scale_color_manual(values = c('#9E329F')) +
   theme_bw()+
-  theme(text = element_text(size=16))+
-  ggtitle("Registration time series Barcelona")
+  theme(text = element_text(size=19))
+# +
+#   ggtitle("Registration time series Barcelona")
 # Save FILE with DOWNLOADS DATA, A(t) en el modelo. This file will be save with registration.dat name.
 # write.dat(downloads_bcn, "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/")
 
@@ -178,13 +179,14 @@ ggplot(report_fil) +
   geom_line(aes(date, n)) +
   #xlim(0,400) +
   xlab("Date") + 
-  ylab("Counts") +
+  ylab("Number of reports") +
   scale_x_date(date_breaks = "6 month",
                date_labels = "%b %y")+
   scale_color_manual(values = c('#32329f')) +
   theme_bw()+
-  theme(text = element_text(size=16))+
-  ggtitle("Tiger mosquito reports to MA in Barcelona")
+  theme(text = element_text(size=20))
+# +
+#   ggtitle(expression("Tiger mosquito reports to MA in Barcelona"))
 
 
 
@@ -229,12 +231,13 @@ max_prop = max(prop_mat[,4])
 ggplot(prop_mat)+ 
   geom_line(aes(x =participation_time_days, y = reporting_prob))+
   # scale_x_continuous(breaks = round(seq(min_prop, max_prop, by = 250),1))+
-  xlab("Participants age")+
+  xlab("Participants age (days)")+
   ylab("Probability")+
   scale_color_manual(values = c('#9E329F')) +
   theme_bw()+
-  theme(text = element_text(size=16))+
-  ggtitle("Propensity probability")
+  theme(text = element_text(size=21))
+# +
+#   ggtitle("Propensity probability")
 # Plot propensity probability.
 prop_mat$group <- 0
 prop_mat$group[prop_mat$participation_time_days<=100]  <- "FIRST" 
@@ -254,16 +257,15 @@ ggplot(prop_mat) +
 
 # Checking the sumation of the different age groups. 
 mat_sim = as.matrix(int_sol)
-int_sum_1 = mat_sim[,2:101]%*%prop_mat[1:100,4]
-int_sum_2 = mat_sim[,101:501]%*%prop_mat[100:500,4]
-int_sum_3 = mat_sim[,501:951]%*%prop_mat[500:950,4]
+int_sum_1 = mat_sim[,2:31]%*%prop_mat[1:30,4]
+int_sum_2 = mat_sim[,31:649]%*%prop_mat[30:648,4]
+int_sum_3 = mat_sim[,649:1386]%*%prop_mat[648:1385,4]
 int_sum_4 = mat_sim[,951:1386]%*%prop_mat[950:1385,4]
 int_sum = mat_sim[,2:1386]%*%prop_mat[1:1385,4]
 df_sum <- data.frame(time = int_sol[,1], 
                      First_age_group = int_sum_1,
                      Second_age_group = int_sum_2,
                      Third_age_group = int_sum_3,
-                     Fourth_age_group = int_sum_4,
                      total  = int_sum,
                      registered = registration$N[1:length(int_sum)])
 df_plot <- reshape2::melt(df_sum, id.vars = c("time"))
@@ -276,11 +278,38 @@ ggplot(df_plot,aes(date, value)) +
                date_labels = "%b %y")  +
   ylab("Counts") + ggtitle("Participation dynamics") +
   scale_color_manual(name = "",
-                     labels = c("[1:100]","[100:500]",
-                                "[500:950]","[950:1385]", "Total","Registered"),
-                     values=c('#FF00F6','#FF2C00','#00FF5E','#0092F6', '#000000','#2F7D9F'))+
+                     labels = c("<30","[30:648]",
+                                ">649", "Total","Registered, B(t)"),
+                     values=c('#686868','#686868','#686868', '#0303cd','#686868'))+
   theme(text = element_text(size=16)) +
-  theme_bw()
+  theme_bw() 
+
+df_plot <- df_plot %>% filter(variable != "total" )
+ggplot(df_plot,aes(date, value)) +
+  geom_line(aes( colour = variable))  +
+  scale_x_date(date_breaks = "10 month",
+               date_labels = "%b %y")  +
+  ylab("Counts") + ggtitle("Participation dynamics") +
+  scale_color_manual(name = "",
+                     labels = c("<30","[30:648]",
+                                ">649","Registered, B(t)"),
+                     values=c('#c71585','#6495ed','#8fbc8f','#deb887'))+
+  theme(text = element_text(size=16)) +
+  theme_bw() 
+
+df_plot <- df_plot %>% filter(variable == "registered" )
+ggplot(df_plot,aes(date, value)) +
+  geom_line(aes( colour = variable))  +
+  scale_x_date(date_breaks = "10 month",
+               date_labels = "%b %y")  +
+  ylab("Counts") + ggtitle("Participation dynamics") +
+  scale_color_manual(name = "",
+                     labels = c("Registered, B(t)"),
+                     values=c('#deb887'))+
+  theme(text = element_text(size=16)) +
+  theme_bw() 
+
+
 
 # Plot with the registration dynamics.
 df_sum <- data.frame(time = int_sol[,1], 
@@ -426,8 +455,9 @@ ggplot(df_tot) +
   geom_line(aes(date,rho))  +
   scale_x_date(date_breaks = "6 month",date_labels = "%b %y") +
   ylab(expression(rho))+
-  theme_bw()+theme(text = element_text(size=16))+
-  ggtitle("Encounter per human capita simulation")
+  theme_bw()+theme(text = element_text(size=18))
+# +
+#   ggtitle("Encounter per human capita simulation")
 
 ggplot(df_tot) + 
   geom_line(aes(date, n_smooth)) +
@@ -507,12 +537,21 @@ df_rho_mov <- merge(df_rho_mov, df_date, by = "time")
 df_tot <- merge(df_rho_mov, df_bg_mov, by = "date")
 
 # Scatter plot with marginal distributions.
-ggscatterstats(df_tot,
+ggscatterstats(data = df_tot,
                x = mov_bg_count,
                y = rho, 
                xlab ="Adult mosquito per m^2 (BG traps)" , 
-               ylab =expression(rho) ) +
-  theme(text = element_text(size=16))
+               ylab =expression(rho),
+               ggplot.component = list(ggplot2::geom_rug(sides = "b"))) 
+
+
+ggscatterstats(
+  data = df_tot,
+  x = mov_bg_count,
+  y = rho,
+  # making further customization with `ggplot2` functions
+  ggplot.component = list(ggplot2::geom_rug(sides = "b"))
+)
 # Scatter splot with Pearson correlation coeficient.
 ggscatter(df_tot, x = "mov_bg_count", y = "rho", 
           add = "reg.line", conf.int = TRUE, 

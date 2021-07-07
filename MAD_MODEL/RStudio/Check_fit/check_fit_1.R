@@ -151,7 +151,7 @@ rm(mat_ages_1)
 ##### PLOTS TEMPORAL SERIES PARTICIPATION ########
 ###### UPLOAD INTEGRATION FILES ######
 # Data of participation.
-Path = "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_final_fit.data"
+Path = "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_final_fit.data"
 # Path = "/home/marta/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration.dat"
 # 
 # Mac PATH
@@ -216,11 +216,22 @@ df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  labs(title = "One day old participants") +
+  # labs(title = "One day old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   ylab("Number of participants")+
+  xlab("Time (days)") +
   theme_bw()+
   theme(text = element_text(size=16)) 
+
+df_plot <- df_plot %>% filter(variable == "Observed" )
+ggplot(df_plot,aes(Time, value)) + 
+  geom_line(aes( colour = variable))  +
+  # labs(title = "One day old participants") +
+  scale_color_manual(values=c('#9E329F'))+
+  ylab("Number of participants")+
+  xlab("Time (days)") +
+  theme_bw()+
+  theme(text = element_text(size=16))
 
 rm(df_plot)
 rm(df_aux)
@@ -231,10 +242,23 @@ df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  labs(title = "25 days old participants") +
+  # labs(title = "25 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
+  xlab("Time (days)") +
+  theme_bw()+
+  theme(text = element_text(size=16)) 
+
+df_plot <- df_plot %>% filter(variable == "Observed" )
+
+ggplot(df_plot,aes(Time, value)) + 
+  geom_line(aes( colour = variable))  +
+  # labs(title = "25 days old participants") +
+  scale_color_manual(values=c('#9E329F'))+
+  theme(text = element_text(size=20))+ 
+  ylab("Number of participants")+
+  xlab("Time (days)") +
   theme_bw()+
   theme(text = element_text(size=16)) 
 
@@ -245,12 +269,24 @@ df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  labs(title = "36 days old participants") +
+  # labs(title = "36 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
+  xlab("Time (days)") +
   theme_bw()+
   theme(text = element_text(size=16)) 
+
+df_plot <- df_plot %>% filter(variable == "Observed" )
+ggplot(df_plot,aes(Time, value)) + 
+  geom_line(aes( colour = variable))  +
+  # labs(title = "36 days old participants") +
+  scale_color_manual(values=c('#9E329F'))+
+  theme(text = element_text(size=20))+ 
+  ylab("Number of participants")+
+  xlab("Time (days)") +
+  theme_bw()+
+  theme(text = element_text(size=16))
 
 rm(df_plot)
 rm(df_aux)
@@ -261,10 +297,11 @@ df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  labs(title = "61 days old participants") +
+  # labs(title = "61 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
+  xlab("Time (days)") +
   theme_bw()+
   theme(text = element_text(size=16)) 
 
@@ -275,10 +312,22 @@ df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  labs(title = "1730 days old participants") +
+  # labs(title = "1730 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
+  xlab("Time (days)") +
+  theme_bw()+
+  theme(text = element_text(size=16)) 
+
+df_plot <- df_plot %>% filter(variable == "Observed" )
+ggplot(df_plot,aes(Time, value)) + 
+  geom_line(aes( colour = variable))  +
+  # labs(title = "1730 days old participants") +
+  scale_color_manual(values=c('#9E329F','#1642FE'))+
+  theme(text = element_text(size=20))+ 
+  ylab("Number of participants")+
+  xlab("Time (days)") +
   theme_bw()+
   theme(text = element_text(size=16)) 
 
@@ -291,10 +340,11 @@ df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  labs(title = "1748 days old participants") +
+  # labs(title = "1748 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
+  xlab("Time (days)") +
   theme_bw()+
   theme(text = element_text(size=16)) 
 ###### PLOTS AGE DISTRIBUTION ######

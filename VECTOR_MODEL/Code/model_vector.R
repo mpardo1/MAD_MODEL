@@ -1,7 +1,6 @@
 rm(list = ls())
 library(easypackages)
-libraries("gdata", "ggplot2", "numbers","tidyverse","data.table","multiplex","reshape","viridis","stats","ggpubr","ggstatsplot","e1071","mlr3misc","deSolve", "gganimate") 
-
+libraries("scales","gdata", "ggplot2", "numbers","tidyverse","data.table","multiplex","reshape","viridis","stats","ggpubr","ggstatsplot","e1071","mlr3misc","deSolve", "gganimate") 
 # Different path for MAc and Ubuntu.
 # PC = "/Users/celsaaraujobarja/Documents"
 # PC = "/Users/celsaaraujobarja/Documents"
@@ -251,6 +250,10 @@ df_plot_1 <- reshape2::melt(df_L_A, id.vars = c("date"))
 df_plot_L <- reshape2::melt(df_L, id.vars = c("date"))
 df_plot <- reshape2::melt(df_Ah, id.vars = c("date"))
 
+scientific_10 <- function(x) {
+  parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
+}
+
 ggplot(df_plot_1,aes(date, value))  +
   geom_line(aes( colour = variable)) +
   ylab("Counts") +
@@ -258,7 +261,7 @@ ggplot(df_plot_1,aes(date, value))  +
   scale_color_manual(name = "",
                      labels = c("Larva", "Adult mosquito"),
                      values=c('#FF00F6','#FF2C00'))+
-  theme_bw() 
+  theme_bw() + scale_y_continuous(labels = scientific_10)
 
 ggplot(df_Ah)  +
   geom_line(aes(date, y3), color = "dark green") +
