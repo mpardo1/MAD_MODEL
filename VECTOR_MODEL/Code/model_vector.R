@@ -261,21 +261,24 @@ ggplot(df_plot_1,aes(date, value))  +
   scale_color_manual(name = "",
                      labels = c("Larva", "Adult mosquito"),
                      values=c('#FF00F6','#FF2C00'))+
-  theme_bw() + scale_y_continuous(labels = scientific_10)
+  theme_bw() + scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
 
 ggplot(df_Ah)  +
   geom_line(aes(date, y3), color = "dark green") +
   ylab("Counts") +
   ggtitle("Handling mosquitoes dynamics") +
   scale_color_manual(values=c('#FF00F6')) +
-  theme_bw()
+  theme_bw() + scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
 
 ggplot(df_L)  +
   geom_line(aes(date, y1), color = "dark green") +
   ylab("Counts") +
   ggtitle("Larvae dynamics") +
   scale_color_manual(values=c('#FF00F6')) +
-  theme_bw()
+  theme_bw()+
+  theme(text = element_text(size=16))
 
 ###### Equilibrium points ######
 
