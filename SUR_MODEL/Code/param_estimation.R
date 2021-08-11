@@ -22,8 +22,7 @@ dyn.load("model.so")
 ll_ode <- function(x, # vector con los parámetros
                    forcings, # forzamientos para el solver de la ode
                    y, # datos
-                   devs, #desviaciones estándar para calcular la loglikelihood
-                   hosp){ #hospitalizados totales y críticos
+                   devs){ #desviaciones estándar para calcular la loglikelihood
   
   pars <- c(gam1 = x[1], # death rate group 1
             gam2 = x[2], # death rate group 2
@@ -31,97 +30,49 @@ ll_ode <- function(x, # vector con los parámetros
   
   population <- c(y1 = 0.0, y2 = 0.0, y3 = 0.0) #Vector inicial para ODE
   
+  forcs_mat <- list(data.matrix(forcings))
+  
   z <- ode(y = population,
            times = 0:nrow(y), func = "derivs", method = "ode45",
-           dllname = "pcrind", initfunc = "initmod", nout = 0, 
-           parms = pars, initforc = "forcc", forcings = forcings, 
+           dllname = "model", initfunc = "initmod", nout = 0, 
+           parms = pars, initforc = "forcc", forcings = forcs_mat, 
            fcontrol = list(method = "constant")) #Aquí corre el ODE
   
-  colnames(z)[2:13] <- c("P1", "P2", "P3", "sum")
+  colnames(z)[2:4] <- c("P1", "P2", "P3")
   
   z <- as.data.frame(z)
   z <- z[-1, ]
   
-  D_ac <- (y$exitus)
-  I2 <- y$ingressats
-  Y_ac <- (y$novas_uci)
-  Y <- y$critics
-  I2_ac <- (y$ingressos)
-  Pos_ac <- (y$positius)
+  P1 <- y$X1
+  P2 <- y$X2
+  P3 <- y$X3
   
   res <- #cálculo de la loglikelihood en función de las desviaciones estándar
-    sum(dnorm(diff(c(0, z$D_ac)) - D_ac, sd = devs[1], log = T)) +
-    sum(dnorm((z$I2 + z$Y) - I2, sd = devs[2], log = T)) +
-    sum(dnorm(diff(c(0, z$Y_ac)) - Y_ac, sd = devs[3], log = T)) +
-    sum(dnorm(z$Y - Y, sd = devs[4], log = T)) +
-    sum(dnorm(diff(c(0, z$I2_ac)) - I2_ac, sd = devs[5], log = T)) +
-    sum(dnorm(diff(c(0, z$Pos_ac)) - Pos_ac, sd = devs[6], log = T))
-  
-  #Penalizaciones parámetros
-  penaltyb <- ((x > 1e-5) * 1.0  - 1) * 10^6
-  
-  penalty2 <- ((x[2] > 1) * -1.0) * 10^6
-  penalty3 <- ((x[3] > 1) * -1.0) * 10^6
-  penalty4 <- ((x[4] > 1) * -1.0) * 10^6
-  penalty7 <- ((x[7] > .6) * -1.0) * 10^6
-  penalty12 <- ((x[12] < 10) * -1.0) * 10^6
-  penalty13 <- ((x[13] < 10) * -1.0) * 10^6
-  penalty14 <- ((x[14] < 10) * -1.0) * 10^6
-  penalty15 <- ((x[15] < 10) * -1.0) * 10^6
-  p12 <- ((x[12] > (347.2431 * 1.2)) * -1.0) * 10^6
-  p13 <- ((x[13] > (167.59675 * 1.2)) * -1.0) * 10^6
-  p14 <- ((x[14] > (792.1791 * 1.2)) * -1.0) * 10^6
-  p15 <- ((x[15] > (726.7072 * 1.2)) * -1.0) * 10^6
-  
-  
-  p2 <- ((x[5] > 2) * -1.0) * 10^6
-  p3 <- ((x[6] > 2) * -1.0) * 10^6
-  p4 <- ((x[8] > 1100) * -1.0) * 10^6
-  p5 <- ((x[9] > 2) * -1.0) * 10^6
-  p6 <- ((x[10] > 2) * -1.0) * 10^6
-  p7 <- ((x[11] > 2) * -1.0) * 10^6
-  p16 <- ((x[16] > 2) * -1.0) * 10^6
-  p17 <- ((x[17] > 2) * -1.0) * 10^6
-  p18 <- ((x[18] > 2) * -1.0) * 10^6
-  p1 <- ((x[1] > 10) * -1.0) * 10^6
-  p17n <- ((x[17] < .0025) * -1.0) * 10^6
-  prmin <- ((x[19] < 89014.12) * -1.0) * 10^6 #Del ultimo fit
-  prmax <- ((x[19] > (263116 * 1.2)) * -1.0) * 10^6 #Del ultimo fit + 20%
-  ptime <- (((1/x[5] + 1/x[6]) > 15) * -1.0) * 10^6 #Tiempo incubación/presintomático
-  p5b <- ((x[9] < .1) * -1.0) * 10^6 #Tasa recuperación asintomáticos
-  rm(z)
-  rm(y)
-  
-  res + sum(penalty2 + penalty3 + penalty4 + penalty7 + penalty12 +
-              penalty13 + penalty14 + penalty15 +
-              penaltyb + p2 + p3 + p4 + p5 + p6 + p7 +
-              p12 + p13 + p14 + p15 + p16 + p17 + p18 + p1 + p17n +
-              prmin + prmax + ptime + p5b)
+    sum(dnorm(z$P1 - P1, sd = devs[1], log = T)) +
+    sum(dnorm(z$P1 - P1, sd = devs[1], log = T)) +
+    sum(dnorm(z$P1 - P1, sd = devs[1], log = T))
 }
-
 
 # Carga datos -------------------------------------------------------------
 
 # Registrations:
 Path = "~/MAD_MODEL/SUR_MODEL/data/Observed_data_2300.data"
-ob_data <- data.frame(t(read.table(Path, header=FALSE)))
-colnames(ob_data[,1]) <- c("time")
+# ob_data <- data.frame(t(read.table(Path, header=FALSE)))
+
+ob_data <- readRDS(file = "ode_pseudo.rds")
+colnames(ob_data) <- c("time", "X1", "X2", "X3")
 head(ob_data)
 
+# f_inicio <- as.Date("2021-05-14")
+# f_fin <- as.Date("2021-06-12")
+# 
+# n_inicio <- which(data$FECHA == f_inicio)
+# n_fin <- which(data$FECHA == f_fin)
 
-load("datos_CAN.RData")
+n_inicio <- 1
+n_fin <- 2000
 
-f_inicio <- as.Date("2021-05-14")
-f_fin <- as.Date("2021-06-12")
-
-n_inicio <- which(data$FECHA == f_inicio)
-n_fin <- which(data$FECHA == f_fin)
-
-# Obtenemos datos diarios de fallecidos y número de tests
-data$exitus <- c(0, diff(data$FALLECIDOS)) 
-data$tests <- c(0, diff(data$TOTAL.TEST))
-
-input2 <- data[n_inicio:n_fin, ]
+input2 <- ob_data[n_inicio:n_fin, ]
 
 
 # Estima desviación estandar de cada serie --------------------------------
@@ -130,58 +81,33 @@ input2 <- data[n_inicio:n_fin, ]
 # las series independientes.
 
 devs <- c()
-spl <- (input2$exitus)
+spl <- (input2$X1)
 fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
 devs[1] <- sd(spl - predict(fit)$y)
-# plot(spl, type = "l")
-# lines(predict(fit))
 
-spl <- input2$TOTAL.HOSPITALIZADOS
+spl <- input2$X2
 fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
 devs[2] <- sd(spl - predict(fit)$y)
 
-spl <- input2$Uci
+spl <- input2$X3
 fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
 devs[3] <- sd(spl - predict(fit)$y)
-
-spl <- input2$HOSPITALIZADOS.UCI
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[4] <- sd(spl - predict(fit)$y)
-
-spl <- input2$Hosp
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[5] <- sd(spl - predict(fit)$y)
-
-spl <- (input2$CASOS.NUEVOS.PCR.)
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[6] <- sd(spl - predict(fit)$y)
-
-
 # Forzamientos ------------------------------------------------------------
 
-forcings <- cbind(0:30, data$tests[n_inicio:(n_fin + 1)])
-
-load("apple_CAN.RData")
-
-
-aind1 <- cbind(0:30,
-               apple.ind$unname.apple.[which(apple.ind$names.apple. == f_inicio):(which(apple.ind$names.apple. == f_fin) + 1)]/100)
-
-forcings <- list(forcings, aind1)
-
+# Registrations:
+Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
+down <- data.frame(t(read.table(Path, header=FALSE)))
+colnames(down) <- c("time", "down")
+head(down)
 
 # Hospitalizados iniciales ------------------------------------------------
-
-hosp <- c()
-hosp[1] <- data$TOTAL.HOSPITALIZADOS[n_inicio - 1]
-hosp[2] <- data$HOSPITALIZADOS.UCI[n_inicio - 1]
 
 # A punto de empezar el proceso -------------------------------------------
 
 best <- -999999999 #LL inicial a mejorar
 
-load("seeds_CAN.RData") #Cargamos seeds de los valores iniciales de los pars.
-
+# load("seeds_CAN.RData") #Cargamos seeds de los valores iniciales de los pars.
+seeds <- matrix( runif(30,0,1), ncol = 10, nrow = 3)
 sols <- NA #Pre-aloco el número de combinaciones paramétricas en 2 unidades de LL de la mejor
 
 set.seed(476468713)
@@ -192,27 +118,19 @@ condition <- T
 #2 puntos de loglikelihood de la mejor solución.
 
 round <- 1
-
-# Ahora cambio los nombres de las columnas para que concuerden con los nombres
-# en la función de likelihood
-input2 <- input2 %>% rename(positius = CASOS.NUEVOS.PCR., 
-                            ingressats = TOTAL.HOSPITALIZADOS,
-                            novas_uci = Uci,
-                            critics = HOSPITALIZADOS.UCI,
-                            ingressos = Hosp)
-
 # Paralelización
 
+# sims <- 2 #Número de combinaciones paramétricas a explorar
 sims <- ncol(seeds) #Número de combinaciones paramétricas a explorar
 
 Cores <- 19 #Numero de cores a utilizar.
 
 while(condition){
   #Ahora viene la paralelización
-  parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
+  parall <- lapply(1:sims,function(k){
     
     
-    fit <- optim(par = seeds[, k], fn = ll_ode, forcings = forcings, y = input2, hosp = hosp, 
+    fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
                  devs = devs, control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
     
     if((k %% 1000) == 0) {
@@ -227,12 +145,12 @@ while(condition){
   
   rm(parall) #Para evitar fugas de memoria
   
-  filename <- paste0("CAN_covid_20210612_", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
+  filename <- paste0("param_MAD_MODEL", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
   save(lhs, file = filename)
   
   # Ahora, recuperamos la loglikelihood de cada combinación de parámetros
-  logl <- rep(NA, 100000)
-  for(i in 1:100000) logl[i] <- lhs[[i]]$value
+  logl <- rep(NA, sims)
+  for(i in 1:sims) logl[i] <- lhs[[i]]$value
   
   # Evaluamos las condiciones para parar el bucle
   best2 <- max(logl, na.rm = T)
@@ -248,20 +166,20 @@ while(condition){
   # Seleccionamos las mejores combinaciones de parámetros para mandar una nueva
   # ronda, cogemos las combinaciones que estén a 2 unidades de distancia de la
   # mejor, o en su defecto, las 250 mejores combinaciones.
-  if(sols < 250){
-    index <- order(logl, decreasing = T)[1:250]
+  if(sols < 20){
+    index <- order(logl, decreasing = T)[1:20]
   } else {
     index <- order(logl, decreasing = T)[1:sols]
   }
   
   n <- 1
-  parmat <- matrix(NA, nrow = length(index), ncol = 19)
+  parmat <- matrix(NA, nrow = length(index), ncol = 3)
   for(i in index){
     parmat[n, ] <- lhs[[i]]$par
     n <- n + 1
   }
   
-  # Muestreamos las mejores combinaciones de parámetros, cada uno de ellos
+   # Muestreamos las mejores combinaciones de parámetros, cada uno de ellos
   # independientemente. De esta forma estamos rompiendo las posibles
   # correlaciones entre los parámetros, y en algún sentido, hacemos la
   # aproximación menos bayesiana al no samplear la distribución multidimensional

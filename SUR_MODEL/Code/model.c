@@ -30,7 +30,7 @@ void forcc(void (* odeforcs)(int *, double *))
     int i;
     
     ydot[0] = i1 - (gam1 + 1)*y[0];
-    for (i = 1; i < 300; ++i){
+    for (i = 1; i < 3; ++i){
         ydot[i] = y[i-1] - (gam2 + 1)*y[i];
     }
 }
