@@ -1,8 +1,7 @@
 rm(list = ls())
-library(easypackages)
-libraries("parallel",
-          "tidyverse",
-          "deSolve") 
+library("parallel")
+library("tidyverse")
+library("deSolve")
 # Función de c que corre la ODE -------------------------------------------
 
 # Esta función está adaptada para su uso con el paquete deSolve, el estándar en
