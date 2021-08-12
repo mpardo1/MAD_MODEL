@@ -48,8 +48,8 @@ ll_ode <- function(x, # vector con los parámetros
   
   res <- #cálculo de la loglikelihood en función de las desviaciones estándar
     sum(dnorm(z$P1 - P1, sd = devs[1], log = T)) +
-    sum(dnorm(z$P1 - P1, sd = devs[1], log = T)) +
-    sum(dnorm(z$P1 - P1, sd = devs[1], log = T))
+    sum(dnorm(z$P2 - P2, sd = devs[2], log = T)) +
+    sum(dnorm(z$P3 - P3, sd = devs[3], log = T))
 }
 
 # Carga datos -------------------------------------------------------------
@@ -126,7 +126,7 @@ Cores <- 19 #Numero de cores a utilizar.
 
 while(condition){
   #Ahora viene la paralelización
-  parall <- lapply(1:sims,function(k){
+  parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
     
     
     fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
