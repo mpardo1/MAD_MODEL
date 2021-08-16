@@ -53,9 +53,9 @@ setwd(Path)
 system("R CMD SHLIB model.c")
 dyn.load("model.so")
 
-gam1 = 0.02
-gam2 = 0.02
-gam3 = 0.03
+gam1 = 0.2
+gam2 = 0.01
+gam3 = 1.4
 # We create a vector with the constant parameters.
 parms = c(gam1,gam2,gam3)
 # We set the initial conditions to cero.

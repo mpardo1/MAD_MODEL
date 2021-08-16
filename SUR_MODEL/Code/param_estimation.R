@@ -123,14 +123,14 @@ round <- 1
 sims <- ncol(seeds) #Número de combinaciones paramétricas a explorar
 
 Cores <- 19 #Numero de cores a utilizar.
-
+it <- 0
 while(condition){
   #Ahora viene la paralelización
   parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
-    
+    it <- it + 1
     
     fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
-                 devs = devs, control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
+                 devs = devs,lower=c(0, 0, 0), upper=rep(Inf, 3), control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
     
     if((k %% 1000) == 0) {
       cat("This was seed no. ", k, "\n")
