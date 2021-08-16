@@ -45,6 +45,7 @@ likelihood <- function(y, #datos
   z <- z[-1, ]
   
   P1 <- y$X1
+  print(paste0("P1", P1))
   P2 <- y$X2
   P3 <- y$X3
   
@@ -67,6 +68,12 @@ forcs_mat <- data.matrix(down)
 # Pseudo Data to check the oprimization method.
 ob_data <- readRDS(file = "ode_pseudo.rds")
 colnames(ob_data) <- c("time", "X1", "X2", "X3")
+l <- nrow(ob_data)
+ob_data$X1 <- ob_data$X1 + rnorm(l,0,trueSD)
+ob_data$X2 <- ob_data$X2 + rnorm(l,0,trueSD)
+ob_data$X3 <- ob_data$X3 + rnorm(l,0,trueSD)
+
+
 head(ob_data)
 # Example: plot the likelihood profile of the slope.
 slopevalues <- function(par){
@@ -87,7 +94,7 @@ prior = function(param){
   aprior = dunif(a, min=0, max=4, log = T)
   bprior = dunif(b, min=0, max=4, log = T)
   cprior = dunif(c, min=0, max=4, log = T)
-  sdprior = dunif(sd, min=0, max=30, log = T)
+  sdprior = dunif(sd, min=0, max=10, log = T)
   return(aprior+bprior+cprior+sdprior)
 }
 
@@ -100,27 +107,29 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  return(abs(rnorm(4,mean = param, sd= c(0.1,0.5,0.3,0.3))))
+  return(rnorm(4, mean = param, sd= c(0.1,0.5,0.3)))
 }
 
-run_metropolis_MCMC = function(startvalue, iterations, y,forc){
+run_metropolis_MCMC = function(startvalue, iterations){
   chain = array(dim = c(iterations+1,4))
   chain[1,] = startvalue
+  prop_mat <- vector("numeric", length = iterations)
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
-    
-    probab = exp(posterior(proposal,y,forc) - posterior(chain[i,],y,forc))
+    print("Proposal:")
+    print(proposal)
+    probab = exp(posterior(proposal,ob_data,forcs_mat) - posterior(chain[i,],ob_data,forcs_mat))
+    prop_mat[i] <- probab
     if (runif(1) < probab){
       chain[i+1,] = proposal
     }else{
-      chain[i+1,] = chain[i,]
+      chain[i+1,] = chain[i,] } 
     }
-  }
-  return(chain)
+  return(list(chain,prop_mat))
 }
 
 startvalue = c(0.1,0.21,1,0.1)
-chain = run_metropolis_MCMC(startvalue, 10000, ob_data, forcs_mat)
+chain = run_metropolis_MCMC(startvalue, 1000)
 
 burnIn = 5000
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
@@ -128,22 +137,28 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 
 ### Summary: #######################
 
-par(mfrow = c(2,3))
-hist(chain[-(1:burnIn),1],nclass=30, , main="Posterior of a", xlab="True value = red line" )
+par(mfrow = c(2,4))
+hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
 abline(v = mean(chain[-(1:burnIn),1]))
-abline(v = trueA, col="red" )
+abline(v = true1, col="red" )
 hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
 abline(v = mean(chain[-(1:burnIn),2]))
-abline(v = trueB, col="red" )
-hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of sd", xlab="True value = red line")
+abline(v = true2, col="red" )
+hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
 abline(v = mean(chain[-(1:burnIn),3]) )
-abline(v = trueSd, col="red" )
+abline(v = true3, col="red" )
+hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
+abline(v = mean(chain[-(1:burnIn),4]) )
+abline(v = trueSD, col="red" )
+
 plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
-abline(h = trueA, col="red" )
+abline(h = true1, col="red" )
 plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
-abline(h = trueB, col="red" )
-plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
-abline(h = trueSd, col="red" )
+abline(h = true2, col="red" )
+plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
+abline(h = true3, col="red" )
+plot(chain[-(1:burnIn),4], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
+abline(h = trueSD, col="red" )
 
 # for comparison:
 summary(lm(y~x))
