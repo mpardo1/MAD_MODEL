@@ -10,8 +10,8 @@ Path = "~/MAD_MODEL/SUR_MODEL/Code/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
-system("R CMD SHLIB model.c")
-dyn.load("model.so")
+system("R CMD SHLIB model_test.c")
+dyn.load("model_test.so")
 
 true1 = 0.2
 true2 = 0.01
@@ -21,32 +21,28 @@ trueSD = 1
 likelihood <- function(y, #datos
                        x, # vector con los parámetros
                        forcings) # forzamientos para el solver de la ode
-                       { 
+{ 
   
-  pars <- c(gam1 = x[1], # death rate group 1
-            gam2 = x[2], # death rate group 2
-            gam3 = x[3]) # death rate group 3
+  pars <- c(gam1 = x[1]) # death rate group 3
   
-  sd <- x[4]
+  sd <- x[2]
   
-  population <- c(y1 = 0.0, y2 = 0.0, y3 = 0.0) #Vector inicial para ODE
+  population <- c(y1 = 0.0) #Vector inicial para ODE
   
   forcs_mat <- list(data.matrix(forcings))
- 
+  
   z <- ode(y = population,
            times = 0:nrow(y), func = "derivs", method = "ode45",
-           dllname = "model", initfunc = "initmod", nout = 0, 
+           dllname = "model_test", initfunc = "initmod", nout = 0, 
            parms = pars, initforc = "forcc", forcings = forcs_mat, 
            fcontrol = list(method = "constant")) #Aquí corre el ODE
   
-  colnames(z)[2:4] <- c("P1", "P2", "P3")
+  colnames(z)[2] <- c("P1")
   
   z <- as.data.frame(z)
   z <- z[-1, ]
   
   P1 <- y$X1
-  P2 <- y$X2
-  P3 <- y$X3
   
   # print(paste0("P1:", P1))
   # print(paste0("P2:", P2))
@@ -57,21 +53,9 @@ likelihood <- function(y, #datos
   # print(paste0("dnorm(P1, mean = z$P1, sd = sd, log = T):", dnorm(P1, mean = z$P1, sd = sd, log = T)))
   # print(paste0("dnorm(P2, mean = z$P1, sd = sd, log = T):", dnorm(P2, mean = z$P2, sd = sd, log = T)))
   # print(paste0("dnorm(P2, mean = z$P1, sd = sd, log = T):", dnorm(P3, mean = z$P3, sd = sd, log = T)))
-  
-  if(is.na(dnorm(P1, mean = z$P1, sd = sd, log = T))){
-    print("dnorm(P1, mean = z$P1, sd = sd, log = T) is na")
-  }
-  if(is.na(dnorm(P2, mean = z$P2, sd = sd, log = T))){
-    print("dnorm(P1, mean = z$P1, sd = sd, log = T) is na")
-  }
-  if(is.na(dnorm(P3, mean = z$P3, sd = sd, log = T))){
-    print("dnorm(P1, mean = z$P1, sd = sd, log = T) is na")
-  }
   res <- #cálculo de la loglikelihood en función de las desviaciones estándar
-    sum(dnorm(P1, mean = z$P1, sd = sd, log = T)) +
-    sum(dnorm(P2, mean = z$P2, sd = sd, log = T)) +
-    sum(dnorm(P3, mean = z$P3, sd = sd, log = T))
- 
+    sum(dnorm(P1, mean = z$P1, sd = sd, log = T)) 
+  
   # print(paste0("res:", res))
   return(res)
 }
@@ -87,18 +71,16 @@ forcs_mat <- data.matrix(down)
 
 # Pseudo Data to check the oprimization method.
 ob_data <- readRDS(file = "ode_pseudo.rds")
-ob_data <- ob_data[1:300,]
-colnames(ob_data) <- c("time", "X1", "X2", "X3")
+ob_data <- ob_data[1:300,1:2]
+colnames(ob_data) <- c("time", "X1")
 l <- nrow(ob_data)
 ob_data$X1 <- ob_data$X1 + rnorm(l,0,trueSD)
-ob_data$X2 <- ob_data$X2 + rnorm(l,0,trueSD)
-ob_data$X3 <- ob_data$X3 + rnorm(l,0,trueSD)
 
 
 head(ob_data)
 # Example: plot the likelihood profile of the slope.
 slopevalues <- function(par){
-  return(likelihood(ob_data,c(par, true2,true3,trueSD),forcs_mat))
+  return(likelihood(ob_data,c(par,trueSD),forcs_mat))
 } 
 
 vec <- seq(0, 1, by=.01)
@@ -109,14 +91,10 @@ plot(vec, slopelikelihoods , type="l", xlab = "values of slope gamma 1", ylab = 
 # Prior distribution
 prior = function(param){
   a = param[1]
-  b = param[2]
-  c = param[3]
-  sd = param[4]
+  sd = param[2]
   aprior = dunif(a, min=0, max=4, log = T)
-  bprior = dunif(b, min=0, max=4, log = T)
-  cprior = dunif(c, min=0, max=4, log = T)
   sdprior = dunif(sd, min=0, max=10, log = T)
-  return(aprior+bprior+cprior+sdprior)
+  return(aprior+sdprior)
 }
 
 # Posterior distribution (sum because we work with logarithms)
@@ -128,13 +106,13 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- c(rnorm(3, mean = param[1:3], sd= c(0.1,0.5,0.3))
-            ,abs(rnorm(1,mean = param[4],sd = 0.3)))
-return(vec)
-  }
+  vec <- c(rnorm(1, mean = param, sd= 0.1)
+           ,abs(rnorm(1,mean = param[],sd = 0.3)))
+  return(vec)
+}
 
 run_metropolis_MCMC = function(startvalue, iterations){
-  chain = array(dim = c(iterations+1,4))
+  chain = array(dim = c(iterations+1,2))
   chain[1,] = startvalue
   prop_mat <- vector("numeric", length = iterations)
   for (i in 1:iterations){
@@ -152,11 +130,11 @@ run_metropolis_MCMC = function(startvalue, iterations){
       chain[i+1,] = proposal
     }else{
       chain[i+1,] = chain[i,] } 
-    }
+  }
   return(chain)
 }
 
-startvalue = c(0.1,0.21,1,0.1)
+startvalue = c(0.1,0.21)
 iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
