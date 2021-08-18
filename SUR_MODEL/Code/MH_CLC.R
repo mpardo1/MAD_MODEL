@@ -116,8 +116,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   prop_mat <- vector("numeric", length = iterations)
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
-    print("Proposal:")
-    print(proposal)
+   #print("Proposal:")
+   #print(proposal)
     probab = exp(posterior(proposal,ob_data,forcs_mat) - posterior(chain[i,],ob_data,forcs_mat))
     prop_mat[i] <- probab
     if (runif(1) < probab){
@@ -125,17 +125,18 @@ run_metropolis_MCMC = function(startvalue, iterations){
     }else{
       chain[i+1,] = chain[i,] } 
     }
-  return(list(chain,prop_mat))
+  return(chain)
 }
 
 startvalue = c(0.1,0.21,1,0.1)
-iterations = 100000
+iterations = 2
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 5000
-acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
+#acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 
-filename <- "~/MAD_MODEL/SUR_MODEL/Code/chain_MH.RData" #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
+print("Optimization finish")
 
