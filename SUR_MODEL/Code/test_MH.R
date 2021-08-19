@@ -2,6 +2,43 @@ rm(list = ls())
 library("parallel")
 library("tidyverse")
 library("deSolve")
+
+# Create Pseudo Data:
+Path = "~/MAD_MODEL/SUR_MODEL/Code/"
+# Path = paste(PC,Path, sep="")
+
+setwd(Path)
+system("R CMD SHLIB model_test.c")
+dyn.load("model_test.so")
+
+gam1 = 0.2
+# We create a vector with the constant parameters.
+parms = c(gam1)
+# We set the initial conditions to cero.
+Y <- c(y1 = 0)
+Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
+down <- data.frame(t(read.table(Path, header=FALSE)))
+colnames(down) <- c("time", "down")
+
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(down))
+
+min_t <- min(down$time)
+max_t <- max(down$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_test",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = down, 
+           fcontrol = list(method = "constant")) 
+
+
+ode <- data.frame(out)
+ode$Sum <- NULL
+head(ode)
+
+saveRDS(ode, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo.rds")
 # Función de c que corre la ODE -------------------------------------------
 
 # Esta función está adaptada para su uso con el paquete deSolve, el estándar en
@@ -43,16 +80,6 @@ likelihood <- function(y, #datos
   z <- z[-1, ]
   
   P1 <- y$X1
-  
-  # print(paste0("P1:", P1))
-  # print(paste0("P2:", P2))
-  # print(paste0("P3:", P3))
-  # print(paste0("z$P1:", z$P1))
-  # print(paste0("z$P2:", z$P2))
-  # print(paste0("z$P3:", z$P3))
-  # print(paste0("dnorm(P1, mean = z$P1, sd = sd, log = T):", dnorm(P1, mean = z$P1, sd = sd, log = T)))
-  # print(paste0("dnorm(P2, mean = z$P1, sd = sd, log = T):", dnorm(P2, mean = z$P2, sd = sd, log = T)))
-  # print(paste0("dnorm(P2, mean = z$P1, sd = sd, log = T):", dnorm(P3, mean = z$P3, sd = sd, log = T)))
   res <- #cálculo de la loglikelihood en función de las desviaciones estándar
     sum(dnorm(P1, mean = z$P1, sd = sd, log = T)) 
   
@@ -70,7 +97,7 @@ head(down)
 forcs_mat <- data.matrix(down)
 
 # Pseudo Data to check the oprimization method.
-ob_data <- readRDS(file = "ode_pseudo.rds")
+ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo.rds")
 ob_data <- ob_data[1:300,1:2]
 colnames(ob_data) <- c("time", "X1")
 l <- nrow(ob_data)
@@ -92,7 +119,7 @@ plot(vec, slopelikelihoods , type="l", xlab = "values of slope gamma 1", ylab = 
 prior = function(param){
   a = param[1]
   sd = param[2]
-  aprior = dunif(a, min=0, max=4, log = T)
+  aprior = dnorm(a, sd=5,  log = T)
   sdprior = dunif(sd, min=0, max=10, log = T)
   return(aprior+sdprior)
 }
@@ -106,8 +133,7 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- c(rnorm(1, mean = param, sd= 0.1)
-           ,abs(rnorm(1,mean = param[],sd = 0.3)))
+  vec <- param + rnorm(2, mean = 0, sd = 0.1)
   return(vec)
 }
 
@@ -117,6 +143,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   prop_mat <- vector("numeric", length = iterations)
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
+    print("Proposal:")
+    print(proposal)
     # print("Proposal:")
     # print(proposal)
     # print(paste0("Iteration:",i))
@@ -125,16 +153,20 @@ run_metropolis_MCMC = function(startvalue, iterations){
     }
     probab = exp(posterior(proposal,ob_data,forcs_mat) - posterior(chain[i,],ob_data,forcs_mat))
     # print("posterior(proposal,ob_data,forcs_mat):",posterior(proposal,ob_data,forcs_mat))
+    
+    print("probab:")
+    print(probab)
     prop_mat[i] <- probab
     if (runif(1) < probab){
       chain[i+1,] = proposal
     }else{
-      chain[i+1,] = chain[i,] } 
+      chain[i+1,] = chain[i,] 
+      } 
   }
   return(chain)
 }
 
-startvalue = c(0.1,0.21)
+startvalue = c(0,0.21)
 iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
@@ -150,21 +182,11 @@ abline(v = mean(chain[-(1:burnIn),1]))
 abline(v = true1, col="red" )
 hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
 abline(v = mean(chain[-(1:burnIn),2]))
-abline(v = true2, col="red" )
-hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
-abline(v = mean(chain[-(1:burnIn),3]) )
-abline(v = true3, col="red" )
-hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
-abline(v = mean(chain[-(1:burnIn),4]) )
-abline(v = trueSD, col="red" )
+abline(v = true, col="red" )
 
 plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
 abline(h = true1, col="red" )
 plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
-abline(h = true2, col="red" )
-plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
-abline(h = true3, col="red" )
-plot(chain[-(1:burnIn),4], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
 abline(h = trueSD, col="red" )
 
 # for comparison:
