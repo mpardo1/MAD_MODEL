@@ -191,3 +191,8 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 
 # for comparison:
 # summary(lm(y~x))
+
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+save(chain, file = filename)
+
+print("Optimization finish")
