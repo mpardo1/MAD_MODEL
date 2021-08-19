@@ -81,6 +81,10 @@ ll_ode <- function(x, # vector con los parámetros
   
   res <- #cálculo de la loglikelihood en función de las desviaciones estándar
     sum(dnorm(z$P1 - P1, sd = devs[1], log = T))
+  if(gam1 < 0){
+    res <- 0.000001
+  }
+  return(res)
 }
 
 # Carga datos -------------------------------------------------------------
@@ -151,7 +155,7 @@ while(condition){
     it <- it + 1
     
     fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
-                 devs = devs,lower=c(0), upper=rep(Inf, 1), control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
+                 devs = devs, control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
     
     if((k %% 1000) == 0) {
       cat("This was seed no. ", k, "\n")
