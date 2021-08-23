@@ -1,6 +1,6 @@
 rm(list = ls())
 
-output <- load("~/Documents/chain_MH_1e+05.RData")
+output <- load("~/Documents/param_MAD_MODEL10.RData")
 out_mat <- matrix(0, nrow = 1000, ncol = 4)
 for(i in c(1:300)){
   out_mat[i,1] = lhs[[i]]$value

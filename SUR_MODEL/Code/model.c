@@ -13,7 +13,6 @@ static double forc[1];
 /* initializers */
 void initmod(void (* odeparms)(int *, double *))
 {
-    
   int N=3;
   odeparms(&N, parms);
 }
@@ -32,6 +31,9 @@ void forcc(void (* odeforcs)(int *, double *))
     ydot[0] = i1 - (gam1 + 1)*y[0];
     for (i = 1; i < 3; ++i){
         ydot[i] = y[i-1] - (gam2 + 1)*y[i];
+    }
+    for (i = 3; i < 5; ++i){
+        ydot[i] = y[i-1] - (gam3 + 1)*y[i];
     }
 }
 /* END file age3classp.c */

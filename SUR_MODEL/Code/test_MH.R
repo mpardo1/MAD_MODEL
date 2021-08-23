@@ -51,39 +51,39 @@ system("R CMD SHLIB model_test.c")
 dyn.load("model_test.so")
 
 true1 = 0.2
-true2 = 0.01
-true3 = 1.4
 trueSD = 1
 # Likelihood function
 likelihood <- function(y, #datos
                        x, # vector con los parámetros
                        forcings) # forzamientos para el solver de la ode
 { 
-  
-  pars <- c(gam1 = x[1]) # death rate group 3
-  
-  sd <- x[2]
-  
-  population <- c(y1 = 0.0) #Vector inicial para ODE
-  
-  forcs_mat <- list(data.matrix(forcings))
-  
-  z <- ode(y = population,
-           times = 0:nrow(y), func = "derivs", method = "ode45",
-           dllname = "model_test", initfunc = "initmod", nout = 0, 
-           parms = pars, initforc = "forcc", forcings = forcs_mat, 
-           fcontrol = list(method = "constant")) #Aquí corre el ODE
-  
-  colnames(z)[2] <- c("P1")
-  
-  z <- as.data.frame(z)
-  z <- z[-1, ]
-  
-  P1 <- y$X1
-  res <- #cálculo de la loglikelihood en función de las desviaciones estándar
-    sum(dnorm(P1, mean = z$P1, sd = sd, log = T)) 
-  
-  # print(paste0("res:", res))
+  if(x[1]<0 | x[2] < 0){
+    res = -2312421
+  }else{
+    pars <- c(gam1 = x[1]) # death rate group 3
+    
+    sd <- x[2]
+    
+    population <- c(y1 = 0.0) #Vector inicial para ODE
+    
+    forcs_mat <- list(data.matrix(forcings))
+    
+    z <- ode(y = population,
+             times = 0:nrow(y), func = "derivs", method = "ode45",
+             dllname = "model_test", initfunc = "initmod", nout = 0, 
+             parms = pars, initforc = "forcc", forcings = forcs_mat, 
+             fcontrol = list(method = "constant")) #Aquí corre el ODE
+    
+    colnames(z)[2] <- c("P1")
+    
+    z <- as.data.frame(z)
+    z <- z[-1, ]
+    
+    P1 <- y$X1
+    res <- #cálculo de la loglikelihood en función de las desviaciones estándar
+      sum(dnorm(P1, mean = z$P1, sd = sd, log = T)) 
+    # print(paste0("res:", res))
+  }
   return(res)
 }
 
@@ -119,8 +119,8 @@ plot(vec, slopelikelihoods , type="l", xlab = "values of slope gamma 1", ylab = 
 prior = function(param){
   a = param[1]
   sd = param[2]
-  aprior = dnorm(a, sd=5,  log = T)
-  sdprior = dunif(sd, min=0, max=10, log = T)
+  aprior = dnorm(a, sd=1,  log = T)
+  sdprior = dnorm(sd, sd=1,  log = T)
   return(aprior+sdprior)
 }
 
@@ -143,30 +143,29 @@ run_metropolis_MCMC = function(startvalue, iterations){
   prop_mat <- vector("numeric", length = iterations)
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
-    print("Proposal:")
-    print(proposal)
+    # print(i)
     # print("Proposal:")
     # print(proposal)
     # print(paste0("Iteration:",i))
     if(is.na(posterior(proposal,ob_data,forcs_mat))){
-      print("na likelyhood")      
+      print("na likelyhood")
     }
+    # print(i)
     probab = exp(posterior(proposal,ob_data,forcs_mat) - posterior(chain[i,],ob_data,forcs_mat))
-    # print("posterior(proposal,ob_data,forcs_mat):",posterior(proposal,ob_data,forcs_mat))
     
-    print("probab:")
-    print(probab)
+    # print("posterior(proposal,ob_data,forcs_mat):",posterior(proposal,ob_data,forcs_mat))
     prop_mat[i] <- probab
     if (runif(1) < probab){
       chain[i+1,] = proposal
     }else{
       chain[i+1,] = chain[i,] 
+
       } 
   }
   return(chain)
 }
 
-startvalue = c(0,0.21)
+startvalue = c(2,5)
 iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
@@ -176,22 +175,21 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 
 ### Summary: #######################
 
-# par(mfrow = c(2,4))
-# hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
-# abline(v = mean(chain[-(1:burnIn),1]))
-# abline(v = true1, col="red" )
-# hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
-# abline(v = mean(chain[-(1:burnIn),2]))
-# abline(v = true, col="red" )
-# 
-# plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
-# abline(h = true1, col="red" )
-# plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
-# abline(h = trueSD, col="red" )
+par(mfrow = c(2,2))
+hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of gamma", xlab="True value = red line" )
+abline(v = mean(chain[-(1:burnIn),1]))
+abline(v = true1, col="red" )
+hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of sd", xlab="True value = red line")
+abline(v = mean(chain[-(1:burnIn),2]))
+abline(v = trueSD, col="red" )
+
+plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
+abline(h = true1, col="red" )
+plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
+abline(h = trueSD, col="red" )
 
 # for comparison:
 # summary(lm(y~x))
-
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
