@@ -9,8 +9,8 @@ Path = "~/MAD_MODEL/SUR_MODEL/Code/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
-system("R CMD SHLIB model.c")
-dyn.load("model.so")
+system("R CMD SHLIB model_5eq.c")
+dyn.load("model_5eq.so")
 
 gam1 = 0.2
 gam2 = 1.2
@@ -30,7 +30,7 @@ min_t <- min(down$time)
 max_t <- max(down$time)
 times <- seq(min_t,max_t, 1)
 out <- ode(Y, times, func = "derivs",
-           parms = parms, dllname = "model",
+           parms = parms, dllname = "model_5eq",
            initfunc = "initmod", nout = 1,
            outnames = "Sum", initforc = "forcc",
            forcings = down, 
@@ -50,8 +50,8 @@ Path = "~/MAD_MODEL/SUR_MODEL/Code/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
-system("R CMD SHLIB model.c")
-dyn.load("model.so")
+system("R CMD SHLIB model_5eq.c")
+dyn.load("model_5eq.so")
 
 true1 = 0.2
 true2 = 1.2
@@ -75,7 +75,7 @@ likelihood <- function(y, #datos
  
   z <- ode(y = population,
            times = 0:nrow(y), func = "derivs", method = "ode45",
-           dllname = "model", initfunc = "initmod", nout = 0, 
+           dllname = "model_5eq", initfunc = "initmod", nout = 0, 
            parms = pars, initforc = "forcc", forcings = forcs_mat, 
            fcontrol = list(method = "constant")) #Aquí corre el ODE
   
