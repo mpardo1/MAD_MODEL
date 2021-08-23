@@ -144,7 +144,9 @@ prior = function(param){
 
 # Posterior distribution (sum because we work with logarithms)
 posterior = function(param, y, forc){
-  return (likelihood(y,param,forc) + prior(param))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.5,0.3))
+                   ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
+  return(vec)
 }
 
 
