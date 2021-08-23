@@ -173,12 +173,12 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,0.1,0.1,0.1)
-iterations = 10000
+iterations = 1000000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-burnIn = 5000
-acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
-### Summary: #######################
+# burnIn = 5000
+# acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
+# ### Summary: #######################
 # 
 # par(mfrow = c(2,4))
 # hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
