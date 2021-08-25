@@ -106,7 +106,7 @@ head(down)
 best <- -999999999 #LL inicial a mejorar
 
 # load("seeds_CAN.RData") #Cargamos seeds de los valores iniciales de los pars.
-seeds <- matrix( runif(3000,0,1), ncol = 1000, nrow = 3)
+seeds <- matrix( runif(30,0,1), ncol = 10, nrow = 3)
 sols <- NA #Pre-aloco el número de combinaciones paramétricas en 2 unidades de LL de la mejor
 
 set.seed(476468713)
@@ -165,8 +165,8 @@ while(condition){
   # Seleccionamos las mejores combinaciones de parámetros para mandar una nueva
   # ronda, cogemos las combinaciones que estén a 2 unidades de distancia de la
   # mejor, o en su defecto, las 250 mejores combinaciones.
-  if(sols < 250){
-    index <- order(logl, decreasing = T)[1:250]
+  if(sols < 25){
+    index <- order(logl, decreasing = T)[1:25]
   } else {
     index <- order(logl, decreasing = T)[1:sols]
   }
