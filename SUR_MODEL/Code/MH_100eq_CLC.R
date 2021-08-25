@@ -1,4 +1,5 @@
 rm(list = ls())
+start_time <- Sys.time()
 library("parallel")
 library("tidyverse")
 library("deSolve")
@@ -186,7 +187,7 @@ likelihood <- function(y, #datos
 Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
 down <- data.frame(t(read.table(Path, header=FALSE)))
 colnames(down) <- c("time", "down")
-head(down)
+# head(down)
 forcs_mat <- data.matrix(down)
 
 # Pseudo Data to check the oprimization method.
@@ -204,16 +205,16 @@ colnames(ob_data) <- c("time", "X1", "X2", "X3", "X4", "X5" , "X6", "X7", "X8", 
 l <- nrow(ob_data)
 ob_data[,2:101] <- ob_data[,2:101] + matrix(rnorm(l*100,0,trueSD), ncol = 100, nrow = l)
 
-head(ob_data)
-# Example: plot the likelihood profile of the slope.
-slopevalues <- function(par){
-  return(likelihood(ob_data,c(par, true2,true3, trueSD),forcs_mat))
-} 
-
-vec <- seq(0, 1, by=.01)
-slopelikelihoods <- lapply(vec, slopevalues )
-
-plot(vec, slopelikelihoods , type="l", xlab = "values of slope gamma 1", ylab = "Log likelihood")
+# head(ob_data)
+# # Example: plot the likelihood profile of the slope.
+# slopevalues <- function(par){
+#   return(likelihood(ob_data,c(par, true2,true3, trueSD),forcs_mat))
+# } 
+# 
+# vec <- seq(0, 1, by=.01)
+# slopelikelihoods <- lapply(vec, slopevalues )
+# 
+# plot(vec, slopelikelihoods , type="l", xlab = "values of slope gamma 1", ylab = "Log likelihood")
 
 # Prior distribution
 prior = function(param){
@@ -261,39 +262,42 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,0.1,0.1,0.1)
-iterations = 1000000
+iterations = 10
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-# burnIn = 5000
+# burnIn = 1
 # acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
-### Summary: #######################
-
-# par(mfrow = c(2,4))
-# hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
-# abline(v = mean(chain[-(1:burnIn),1]))
-# abline(v = true1, col="red" )
-# hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
-# abline(v = mean(chain[-(1:burnIn),2]))
-# abline(v = true2, col="red" )
-# hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
-# abline(v = mean(chain[-(1:burnIn),3]))
-# abline(v = true3, col="red" )
-# hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
-# abline(v = mean(chain[-(1:burnIn),4]) )
-# abline(v = trueSD, col="red" )
+# ### Summary: #######################
 # 
-# plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
-# abline(h = true1, col="red" )
-# plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
-# abline(h = true2, col="red" )
-# plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
-# abline(h = true3, col="red" )
-# plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
-# abline(h = trueSD, col="red" )
-
-
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_100eq_1000000it",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
-save(chain, file = filename)
+#  par(mfrow = c(2,4))
+#  hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
+#  abline(v = mean(chain[-(1:burnIn),1]))
+#  abline(v = true1, col="red" )
+#  hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
+#  abline(v = mean(chain[-(1:burnIn),2]))
+#  abline(v = true2, col="red" )
+#  hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
+#  abline(v = mean(chain[-(1:burnIn),3]))#
+# abline(v = true3, col="red" )
+#  hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
+#  abline(v = mean(chain[-(1:burnIn),4]) )
+#  abline(v = trueSD, col="red" )
+# 
+#  plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
+#  abline(h = true1, col="red" )
+#  plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
+#  abline(h = true2, col="red" )
+#  plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
+#  abline(h = true3, col="red" )
+#  plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
+#  abline(h = trueSD, col="red" )
+# 
+# 
+# filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_100eq_1000000it",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+# save(chain, file = filename)
 
 print("Optimization finish")
-
+end_time <- Sys.time()
+diff_time <- end_time - start_time
+print("Execution time:")
+print(diff_time)
