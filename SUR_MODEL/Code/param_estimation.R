@@ -39,7 +39,7 @@ out <- ode(Y, times, func = "derivs",
 
 ode <- data.frame(out)
 ode$Sum <- NULL
-head(ode)
+# head(ode)
 
 saveRDS(ode, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_5eq.rds")
 # Función de c que corre la ODE -------------------------------------------
@@ -109,7 +109,7 @@ Path = "~/MAD_MODEL/SUR_MODEL/data/Observed_data_2300.data"
 
 ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_5eq.rds")
 colnames(ob_data) <- c("time", "X1", "X2", "X3", "X4", "X5")
-head(ob_data)
+# head(ob_data)
 
 # f_inicio <- as.Date("2021-05-14")
 # f_fin <- as.Date("2021-06-12")
@@ -154,7 +154,7 @@ devs[5] <- sd(spl - predict(fit)$y)
 Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
 down <- data.frame(t(read.table(Path, header=FALSE)))
 colnames(down) <- c("time", "down")
-head(down)
+# head(down)
 
 # Hospitalizados iniciales ------------------------------------------------
 

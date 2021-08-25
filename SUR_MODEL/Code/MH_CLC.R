@@ -182,11 +182,11 @@ run_metropolis_MCMC = function(startvalue, iterations){
   return(chain)
 }
 
-startvalue = c(0.1,0.1,0.1,0.1)
+startvalue = c(0.1,1,2.5,0.5)
 iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-burnIn = 50
+burnIn = 5000
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 ### Summary: #######################
 
