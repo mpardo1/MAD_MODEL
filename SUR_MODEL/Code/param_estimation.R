@@ -64,7 +64,7 @@ ll_ode <- function(x, # vector con los parámetros
                    devs){ #desviaciones estándar para calcular la loglikelihood
   
   if(x[1] < 0 | x[2] < 0 | x[3] < 0){
-    
+    res = -86829146000
   }else{
   pars <- c(gam1 = x[1], # death rate group 1
             gam2 = x[2], # death rate group 2

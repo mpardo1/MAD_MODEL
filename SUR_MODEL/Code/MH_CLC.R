@@ -62,8 +62,8 @@ likelihood <- function(y, #datos
                        x, # vector con los parámetros
                        forcings) # forzamientos para el solver de la ode
                        { 
-  print("x:")
-  print(x)
+  # print("x:")
+  # print(x)
   if(x[1] < 0 | x[2] < 0 | x[3] < 0 ){
     print("Negative param")
     res = -86829146000
@@ -103,8 +103,8 @@ likelihood <- function(y, #datos
     sum(dnorm(P5, mean = z$P5, sd = sd, log = T))
   }
   
-  print("res:")
-  print(res)
+  # print("res:")
+  # print(res)
   return(res)
 }
 
@@ -159,7 +159,7 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.5,0.3))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
                    ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
   return(vec)
 }
@@ -170,8 +170,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   prop_mat <- vector("numeric", length = iterations)
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
-   #print("Proposal:")
-   #print(proposal)
+   print("Iteration:")
+   print(i)
     probab = exp(posterior(proposal,ob_data,forcs_mat) - posterior(chain[i,],ob_data,forcs_mat))
     prop_mat[i] <- probab
     if (runif(1) < probab){
@@ -186,7 +186,7 @@ startvalue = c(0.1,0.1,0.1,0.1)
 iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-burnIn = 5000
+burnIn = 50
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 ### Summary: #######################
 
