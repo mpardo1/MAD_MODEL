@@ -2,6 +2,46 @@ rm(list = ls())
 library("parallel")
 library("tidyverse")
 library("deSolve")
+
+# Create pseudo data:
+# Create Pseudo Data:
+Path = "~/MAD_MODEL/SUR_MODEL/Code/"
+# Path = paste(PC,Path, sep="")
+
+setwd(Path)
+system("R CMD SHLIB model_5eq.c")
+dyn.load("model_5eq.so")
+
+gam1 = 0.2
+gam2 = 1.2
+gam3 = 3
+# We create a vector with the constant parameters.
+parms = c(gam1,gam2,gam3)
+# We set the initial conditions to zero.
+Y <- c(y1 = 0, y2=0, y3=0, y4 = 0, y5 = 0)
+Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
+down <- data.frame(t(read.table(Path, header=FALSE)))
+colnames(down) <- c("time", "down")
+
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(down))
+
+min_t <- min(down$time)
+max_t <- max(down$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_5eq",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = down, 
+           fcontrol = list(method = "constant")) 
+
+
+ode <- data.frame(out)
+ode$Sum <- NULL
+head(ode)
+
+saveRDS(ode, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_5eq.rds")
 # Función de c que corre la ODE -------------------------------------------
 
 # Esta función está adaptada para su uso con el paquete deSolve, el estándar en
@@ -10,8 +50,8 @@ Path = "~/MAD_MODEL/SUR_MODEL/Code/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
-system("R CMD SHLIB model.c")
-dyn.load("model.so")
+system("R CMD SHLIB model_5eq.c")
+dyn.load("model_5eq.so")
 
 
 # Función que calcula la loglikelihood del modelo ----------------------------------
@@ -23,21 +63,24 @@ ll_ode <- function(x, # vector con los parámetros
                    y, # datos
                    devs){ #desviaciones estándar para calcular la loglikelihood
   
+  if(x[1] < 0 | x[2] < 0 | x[3] < 0){
+    
+  }else{
   pars <- c(gam1 = x[1], # death rate group 1
             gam2 = x[2], # death rate group 2
             gam3 = x[3]) # death rate group 3
   
-  population <- c(y1 = 0.0, y2 = 0.0, y3 = 0.0) #Vector inicial para ODE
+  population <- c(y1 = 0.0, y2 = 0.0, y3 = 0.0, y4 = 0.0, y5 = 0.0) #Vector inicial para ODE
   
   forcs_mat <- list(data.matrix(forcings))
   
   z <- ode(y = population,
            times = 0:nrow(y), func = "derivs", method = "ode45",
-           dllname = "model", initfunc = "initmod", nout = 0, 
+           dllname = "model_5eq", initfunc = "initmod", nout = 0, 
            parms = pars, initforc = "forcc", forcings = forcs_mat, 
            fcontrol = list(method = "constant")) #Aquí corre el ODE
   
-  colnames(z)[2:4] <- c("P1", "P2", "P3")
+  colnames(z)[2:7] <- c("P1", "P2", "P3", "P4", "P5")
   
   z <- as.data.frame(z)
   z <- z[-1, ]
@@ -45,11 +88,17 @@ ll_ode <- function(x, # vector con los parámetros
   P1 <- y$X1
   P2 <- y$X2
   P3 <- y$X3
+  P4 <- y$X4
+  P5 <- y$X5
   
   res <- #cálculo de la loglikelihood en función de las desviaciones estándar
     sum(dnorm(z$P1 - P1, sd = devs[1], log = T)) +
     sum(dnorm(z$P2 - P2, sd = devs[2], log = T)) +
-    sum(dnorm(z$P3 - P3, sd = devs[3], log = T))
+    sum(dnorm(z$P3 - P3, sd = devs[3], log = T)) +
+    sum(dnorm(z$P4 - P4, sd = devs[4], log = T)) +
+    sum(dnorm(z$P5 - P5, sd = devs[5], log = T)) 
+  }
+  return(res)
 }
 
 # Carga datos -------------------------------------------------------------
@@ -58,8 +107,8 @@ ll_ode <- function(x, # vector con los parámetros
 Path = "~/MAD_MODEL/SUR_MODEL/data/Observed_data_2300.data"
 # ob_data <- data.frame(t(read.table(Path, header=FALSE)))
 
-ob_data <- readRDS(file = "ode_pseudo.rds")
-colnames(ob_data) <- c("time", "X1", "X2", "X3")
+ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_5eq.rds")
+colnames(ob_data) <- c("time", "X1", "X2", "X3", "X4", "X5")
 head(ob_data)
 
 # f_inicio <- as.Date("2021-05-14")
@@ -91,6 +140,14 @@ devs[2] <- sd(spl - predict(fit)$y)
 spl <- input2$X3
 fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
 devs[3] <- sd(spl - predict(fit)$y)
+
+spl <- input2$X4
+fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
+devs[4] <- sd(spl - predict(fit)$y)
+
+spl <- input2$X5
+fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
+devs[5] <- sd(spl - predict(fit)$y)
 # Forzamientos ------------------------------------------------------------
 
 # Registrations:
@@ -130,7 +187,7 @@ while(condition){
     it <- it + 1
     
     fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
-                 devs = devs,lower=c(0, 0, 0), upper=rep(Inf, 3), control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
+                 devs = devs, control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
     
     if((k %% 1000) == 0) {
       cat("This was seed no. ", k, "\n")

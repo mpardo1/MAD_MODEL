@@ -62,7 +62,12 @@ likelihood <- function(y, #datos
                        x, # vector con los parámetros
                        forcings) # forzamientos para el solver de la ode
                        { 
-  
+  print("x:")
+  print(x)
+  if(x[1] < 0 | x[2] < 0 | x[3] < 0 ){
+    print("Negative param")
+    res = -86829146000
+  }else{
   pars <- c(gam1 = x[1], # death rate group 1
             gam2 = x[2],
             gam3 = x[3]) # death rate group 2
@@ -93,10 +98,13 @@ likelihood <- function(y, #datos
   res <- #cálculo de la loglikelihood en función de las desviaciones estándar
     sum(dnorm(P1, mean = z$P1, sd = sd, log = T)) +
     sum(dnorm(P2, mean = z$P2, sd = sd, log = T)) +
-    sum(dnorm(P3, mean = z$P3, sd = sd, log = T))+
+    sum(dnorm(P3, mean = z$P3, sd = sd, log = T)) +
     sum(dnorm(P4, mean = z$P4, sd = sd, log = T)) +
     sum(dnorm(P5, mean = z$P5, sd = sd, log = T))
- 
+  }
+  
+  print("res:")
+  print(res)
   return(res)
 }
 
@@ -144,16 +152,16 @@ prior = function(param){
 
 # Posterior distribution (sum because we work with logarithms)
 posterior = function(param, y, forc){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.5,0.3))
-                   ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
-  return(vec)
+  return (likelihood(y,param,forc) + prior(param))
 }
 
 
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  return(abs(rnorm(4, mean = param, sd= c(0.1,0.5,0.3,0.4))))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.5,0.3))
+                   ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
+  return(vec)
 }
 
 run_metropolis_MCMC = function(startvalue, iterations){
@@ -175,35 +183,35 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,0.1,0.1,0.1)
-iterations = 1000000
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-# burnIn = 5000
-# acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
-# ### Summary: #######################
-# 
-# par(mfrow = c(2,4))
-# hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
-# abline(v = mean(chain[-(1:burnIn),1]))
-# abline(v = true1, col="red" )
-# hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
-# abline(v = mean(chain[-(1:burnIn),2]))
-# abline(v = true2, col="red" )
-# hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
-# abline(v = mean(chain[-(1:burnIn),3]))
-# abline(v = true3, col="red" )
-# hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
-# abline(v = mean(chain[-(1:burnIn),4]) )
-# abline(v = trueSD, col="red" )
-# 
-# plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
-# abline(h = true1, col="red" )
-# plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
-# abline(h = true2, col="red" )
-# plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
-# abline(h = true3, col="red" )
-# plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
-# abline(h = trueSD, col="red" )
+burnIn = 5000
+acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
+### Summary: #######################
+
+par(mfrow = c(2,4))
+hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
+abline(v = mean(chain[-(1:burnIn),1]))
+abline(v = true1, col="red" )
+hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
+abline(v = mean(chain[-(1:burnIn),2]))
+abline(v = true2, col="red" )
+hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
+abline(v = mean(chain[-(1:burnIn),3]))
+abline(v = true3, col="red" )
+hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
+abline(v = mean(chain[-(1:burnIn),4]) )
+abline(v = trueSD, col="red" )
+
+plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
+abline(h = true1, col="red" )
+plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
+abline(h = true2, col="red" )
+plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
+abline(h = true3, col="red" )
+plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
+abline(h = trueSD, col="red" )
 
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_5eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)

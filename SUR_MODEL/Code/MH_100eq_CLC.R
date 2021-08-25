@@ -73,7 +73,9 @@ likelihood <- function(y, #datos
                        x, # vector con los parámetros
                        forcings) # forzamientos para el solver de la ode
 { 
-  
+  if(x[1] < 0 | x[2] < 0 | x[3] < 0 ){
+    res = -86829146000
+  }else{
   pars <- c(gam1 = x[1], # death rate group 1
             gam2 = x[2],
             gam3 = x[3]) # death rate group 2
@@ -178,7 +180,7 @@ likelihood <- function(y, #datos
     sum(dnorm(P93, mean = z$P93, sd = sd, log = T)) + sum(dnorm(P98, mean = z$P98, sd = sd, log = T)) +
     sum(dnorm(P94, mean = z$P94, sd = sd, log = T)) + sum(dnorm(P99, mean = z$P99, sd = sd, log = T)) +
     sum(dnorm(P95, mean = z$P95, sd = sd, log = T)) + sum(dnorm(P100, mean = z$P100, sd = sd, log = T)) 
-  
+  }
   return(res)
 }
 
