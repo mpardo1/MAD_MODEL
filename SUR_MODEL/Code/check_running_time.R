@@ -8,6 +8,11 @@ ex_frame <- data.frame(iterations = c(seq(1,10,1),100,10000),
                                   3.115905, 3.488181,3.647778,
                                   4.165789, 4.400713,4.926383,
                                   5.020474, 49.82251,8667.972))
+
+# Two chains:
+ex_frame <- data.frame(iterations = c(1,10,50,100,500), 
+                       ex_time = c(2.211089,8.057199, 34.4963,
+                                   67.76064,349.3564))
 ggplot(ex_frame) +
  geom_line(aes(iterations, ex_time))
 

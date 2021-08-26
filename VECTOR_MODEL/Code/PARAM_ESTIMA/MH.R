@@ -87,9 +87,9 @@ ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) +
   ggtitle("Mosquito adult mortality rate")+
   theme_bw()
 
-ggplot(df_dl_opt_vec) + geom_line(aes(temp,deltaA)) +
-  ggtitle("Mosquito adult mortality rate")+
-  theme_bw()
+# ggplot(df_dl_opt_vec) + geom_line(aes(temp,deltaA)) +
+#   ggtitle("Mosquito adult mortality rate")+
+#   theme_bw()
 
 
 # Compute the values of the functions/forcings with temp.
@@ -173,16 +173,17 @@ dyn.load("model.so")
 
 f = 200
 K = 250000
-H = 1600000
+H = 160000
+omega_t = 0.2
+trueSD = 1
 # We create a vector with the constant parameters.
-parms = c(f,K,H)
+parms = c(f,K,H, omega_t)
 # We set the initial conditions to cero.
 Y <- c(y1 = 100.0, y2 = 0.0, y3 = 0.0)
 # List with the data frames of the forcings, sort as the c code.
 forcs_mat <- list(data.matrix(df_gonot_out),
                   data.matrix(df_dL_out),
                   data.matrix(df_deltaL_out),
-                  data.matrix(df_rho),
                   data.matrix(df_deltaA_out))
 min_t <- min(df_rho$time)
 max_t <- max(df_rho$time)
@@ -194,3 +195,130 @@ out <- ode(Y, times, func = "derivs",
            forcings = forcs_mat, fcontrol = list(method = "constant")) 
 
 ode <- data.frame(out) 
+
+saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo.rds")
+
+
+likelihood <- function(x) # forzamientos para el solver de la ode
+{ 
+  if(x[1] <= 0 ){
+    print("Negative param")
+    res = -86829146000
+  }else{
+    pars <- c(f = f,K = K,H = H,omega = x[1]) # death rate group 2
+    
+    sd <- x[2]
+    
+    population <- c(y1 = 100.0, y2 = 0.0, y3 = 0.0) #Vector inicial para ODE
+    
+    
+    z <- ode(y=population,
+             times = 0:nrow(y), func = "derivs", method = "ode45",
+             dllname = "model" , parms = pars,
+             initfunc = "initmod", initforc = "forcc",
+             forcings = forcs_mat, fcontrol = list(method = "constant")) 
+    #Aquí corre el ODE
+    
+    colnames(z)[2:4] <- c("L", "A", "Ah")
+    
+    z <- as.data.frame(z)
+    z <- z[-1, ]
+    
+    L <- y$L
+    A <- y$A
+    Ah <- y$Ah
+    
+    res <- #cálculo de la loglikelihood en función de las desviaciones estándar
+      sum(dnorm((A+Ah), mean = (z$A + z$Ah), sd = sd, log = T))  
+  }
+  
+  # print("res:")
+  # print(res)
+  return(res)
+}
+
+# Pseudo Data to check the oprimization method.
+ob_data <- readRDS(file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo.rds")
+colnames(ob_data) <- c("time", "L", "A", "Ah")
+l <- nrow(ob_data)
+ob_data$L <- ob_data$L + rnorm(l,0,trueSD)
+ob_data$A <- ob_data$A + rnorm(l,0,trueSD)
+ob_data$Ah <- ob_data$Ah + rnorm(l,0,trueSD)
+
+true1 = omega_t
+
+y <- ob_data
+# Prior distribution
+prior = function(param){
+  a = param[1]
+  sd = param[2]
+  aprior = dnorm(a, sd=1,  log = T)
+  sdprior = dnorm(sd, sd=1,  log = T)
+  return(aprior+sdprior)
+}
+
+######## Metropolis algorithm ################
+
+proposalfunction = function(param){
+  vec <- c(rnorm(1, mean = param[1], sd= 0.1)
+           ,abs(rnorm(1,mean = param[2] ,sd = 0.1)))
+  
+  return(vec)
+}
+
+run_metropolis_MCMC = function(startvalue, iterations){
+  chain = array(dim = c(iterations+1,2))
+  chain[1,] = startvalue
+  for (i in 1:iterations){
+    proposal = proposalfunction(chain[i,])
+    print("Iteration:")
+    print(i)
+    print("likelihood(proposal):")
+    print(likelihood(proposal))
+    print("prior(proposal):")
+    print(prior(proposal))
+    print("likelihood(chain[i,]):")
+    print(likelihood(chain[i,]))
+    probab = exp(likelihood(proposal)+ prior(proposal) - likelihood(chain[i,])- prior(chain[i,]))
+    if (runif(1) < probab){
+      chain[i+1,] = proposal
+    }else{
+      chain[i+1,] = chain[i,] } 
+  }
+  return(chain)
+}
+
+
+startvalue = c(0.1,1)
+iterations = 10000
+chain = run_metropolis_MCMC(startvalue, iterations)
+
+# filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_op_3eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+# save(chain, file = filename)
+burnIn = 5000
+acceptance1 = 1-mean(duplicated(chain[-(1:burnIn),]))
+
+chain <- mcmc(chain)
+summary(chain)
+plot(chain)
+
+library(BayesianTools)
+correlationPlot(data.frame(chain))
+#
+# # Convergence diagnosis:
+#
+# print("Optimization finish")
+chain2 = run_metropolis_MCMC(startvalue, 10000)
+burnIn = 5000
+acceptance2 = 1-mean(duplicated(chain2[-(1:burnIn),]))
+
+chain2 <- mcmc(chain2)
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain2_MH_op_3eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+save(chain, file = filename)
+
+
+combinedchains = mcmc.list(chain, chain2)
+plot(combinedchains)
+gelman.diag(combinedchains)
+gelman.plot(combinedchains)
+

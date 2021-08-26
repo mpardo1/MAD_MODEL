@@ -1,4 +1,6 @@
 rm(list = ls())
+start_time <- Sys.time()
+
 library("parallel")
 library("tidyverse")
 library("deSolve")
@@ -246,7 +248,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 
 
 startvalue = c(0.1,1,2.5,0.5)
-iterations = 10
+iterations = 500
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_op_100eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
@@ -277,3 +279,7 @@ save(chain2, file = filename)
 # plot(combinedchains)
 # gelman.diag(combinedchains)
 # gelman.plot(combinedchains)
+end_time <- Sys.time()
+diff_time <- end_time - start_time
+print("Execution time:")
+print(diff_time)
