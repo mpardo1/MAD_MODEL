@@ -131,8 +131,11 @@ prior = function(param){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
-                   ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
+  # vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
+                   # ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
+  vec <- c(rnorm(3, mean = param[1:3], sd= c(0.1,0.1,0.1))
+                   ,abs(rnorm(1,mean = param[4] ,sd = 0.1)))
+  
   return(vec)
 }
 
@@ -154,29 +157,34 @@ run_metropolis_MCMC = function(startvalue, iterations){
 
 
 startvalue = c(0.1,1,2.5,0.5)
-iterations = 100000
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_op_3eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
-save(chain, file = filename)
+# filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_op_3eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+# save(chain, file = filename)
+burnIn = 5000
+acceptance1 = 1-mean(duplicated(chain[-(1:burnIn),]))
 
-# chain <- mcmc(chain)
-# summary(chain)
-# plot(chain)
+ chain <- mcmc(chain)
+summary(chain)
+plot(chain)
 
-# library(BayesianTools)
-# correlationPlot(data.frame(chain))
-# 
+library(BayesianTools)
+ correlationPlot(data.frame(chain))
+#
 # # Convergence diagnosis:
-# 
+#
 # print("Optimization finish")
 chain2 = run_metropolis_MCMC(startvalue, 10000)
+burnIn = 5000
+acceptance2 = 1-mean(duplicated(chain2[-(1:burnIn),]))
 
+chain2 <- mcmc(chain2)
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain2_MH_op_3eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 
-# combinedchains = mcmc.list(chain, chain2)
-# plot(combinedchains)
-# gelman.diag(combinedchains)
-# gelman.plot(combinedchains)
+ combinedchains = mcmc.list(chain, chain2)
+ plot(combinedchains)
+ gelman.diag(combinedchains)
+ gelman.plot(combinedchains)

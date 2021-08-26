@@ -49,7 +49,7 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
  chain_mc <- mcmc(chain)
  summary(chain_mc)
  plot(chain_mc)
-
+ pairs(chain_mc)
  library(BayesianTools)
  correlationPlot(data.frame(chain_mc))
                  

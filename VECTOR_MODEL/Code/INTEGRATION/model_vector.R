@@ -1,6 +1,11 @@
 rm(list = ls())
 library(easypackages)
-libraries("scales","gdata", "ggplot2", "numbers","tidyverse","data.table","multiplex","reshape","viridis","stats","ggpubr","ggstatsplot","e1071","mlr3misc","deSolve", "gganimate") 
+libraries("scales","gdata", "ggplot2",
+          "numbers","tidyverse","data.table",
+          "multiplex","reshape","viridis",
+          "stats","ggpubr","ggstatsplot",
+          "e1071","mlr3misc","deSolve",
+          "gganimate") 
 # Different path for MAc and Ubuntu.
 # PC = "/Users/celsaaraujobarja/Documents"
 # PC = "/Users/celsaaraujobarja/Documents"
