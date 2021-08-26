@@ -3,11 +3,11 @@ library("parallel")
 library("tidyverse")
 library("ggplot2")
 
-ex_frame <- data.frame(iterations = seq(1,10,1), 
+ex_frame <- data.frame(iterations = c(seq(1,10,1),100,10000), 
                       ex_time = c(2.211089,2.334053, 2.75596,
                                   3.115905, 3.488181,3.647778,
                                   4.165789, 4.400713,4.926383,
-                                  5.020474))
+                                  5.020474, 49.82251,8667.972))
 ggplot(ex_frame) +
  geom_line(aes(iterations, ex_time))
 
@@ -27,6 +27,6 @@ ggplot(data = ex_frame, aes(x = iterations, y = ex_time)) +
         axis.line.y=element_line()) +
   ggtitle("Linear Model Fitted to Data")
 
-predict(fit, data.frame(iterations = 50000))/86400
+predict(fit, data.frame(iterations = 50000))/3600
 
 
