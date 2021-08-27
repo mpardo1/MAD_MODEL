@@ -4,16 +4,16 @@ library("tidyverse")
 library("deSolve")
 library("coda")
 
-Path = "~/MAD_MODEL/VECTOR_MODEL/data/df_rho.dat"
-df_rho <- data.frame(t(read.table(Path, header=FALSE)))
-colnames(df_rho) <- c("time", "rho", "date")
-df_rho$date = as.Date(df_rho$date , "%Y-%m-%d")
-df_rho$time <- NULL
-df_rho$rho <- as.numeric(df_rho$rho)
-ggplot(df_rho) + 
-  geom_line(aes(x = date, y =rho)) +
-  ggtitle("Encounter rate computed from Citizen Science model") +
-  theme_bw()
+# Path = "~/MAD_MODEL/VECTOR_MODEL/data/df_rho.dat"
+# df_rho <- data.frame(t(read.table(Path, header=FALSE)))
+# colnames(df_rho) <- c("time", "rho", "date")
+# df_rho$date = as.Date(df_rho$date , "%Y-%m-%d")
+# df_rho$time <- NULL
+# df_rho$rho <- as.numeric(df_rho$rho)
+# # ggplot(df_rho) + 
+#   geom_line(aes(x = date, y =rho)) +
+#   ggtitle("Encounter rate computed from Citizen Science model") +
+#   theme_bw()
 # Temperatures from Barcelona:
 Path_temp = "~/MAD_MODEL/VECTOR_MODEL/data/bcn_weather_daily.Rds"
 # Path_temp = paste(PC,Path_temp, sep="")
@@ -21,12 +21,12 @@ Path_temp = "~/MAD_MODEL/VECTOR_MODEL/data/bcn_weather_daily.Rds"
 temp <-read_rds(Path_temp)
 temp$date = as.Date(temp$date , "%Y-%m-%d")
 temp <- temp %>%  group_by(date) %>% summarise(mean_temp = mean(valor))
-
-ggplot(temp) +
-  geom_line(aes(date, mean_temp))+
-  ggtitle("Mean temperature Barcelona") + 
-  xlab("Mean temperature")+
-  theme_bw()
+# 
+# ggplot(temp) +
+#   geom_line(aes(date, mean_temp))+
+#   ggtitle("Mean temperature Barcelona") + 
+#   xlab("Mean temperature")+
+#   theme_bw()
 
 # Gonotrophic cycle:
 gonot <- function(T){
@@ -70,22 +70,22 @@ df_dL_vec <- data.frame(temp = vec, dL = unlist(lapply(vec,d_L)))
 df_deltaL_vec <- data.frame(temp = vec, deltaL = unlist(lapply(vec,delta_L)))
 df_deltaA_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,delta_A)))
 # df_dl_opt_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,dL_opt)))
-
-ggplot(df_gonot_vec) + geom_line(aes(temp,gonot)) + 
-  ggtitle("Inverse of the Gonotrophic cycle")+
-  theme_bw()
-
-ggplot(df_dL_vec) + geom_line(aes(temp,dL)) +
-  ggtitle("Larva development rate")+
-  theme_bw()
-
-ggplot(df_deltaL_vec) + geom_line(aes(temp,deltaL)) +
-  ggtitle("Larva mortality rate")+
-  theme_bw()
-
-ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) +
-  ggtitle("Mosquito adult mortality rate")+
-  theme_bw()
+# 
+# ggplot(df_gonot_vec) + geom_line(aes(temp,gonot)) + 
+#   ggtitle("Inverse of the Gonotrophic cycle")+
+#   theme_bw()
+# 
+# ggplot(df_dL_vec) + geom_line(aes(temp,dL)) +
+#   ggtitle("Larva development rate")+
+#   theme_bw()
+# 
+# ggplot(df_deltaL_vec) + geom_line(aes(temp,deltaL)) +
+#   ggtitle("Larva mortality rate")+
+#   theme_bw()
+# 
+# ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) +
+#   ggtitle("Mosquito adult mortality rate")+
+#   theme_bw()
 
 # ggplot(df_dl_opt_vec) + geom_line(aes(temp,deltaA)) +
 #   ggtitle("Mosquito adult mortality rate")+
@@ -94,13 +94,8 @@ ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) +
 
 # Compute the values of the functions/forcings with temp.
 # Compute the minimum date of the rho:
-min_rho_date <- min(df_rho$date)
-min_temp_date <- min(temp$date)
-min_date <-max(min_rho_date, min_temp_date)
-
-max_rho_date <- max(df_rho$date)
-max_temp_date <- max(temp$date)
-max_date <-min(max_rho_date, max_temp_date)
+min_date <- min(temp$date)
+max_date <- max(temp$date)
 # DFs with the date and value of the parameter at that time.
 temp <- temp  %>% filter( temp$date >= min_date & temp$date <= max_date)
 df_date <- data.frame(date = temp$date)
@@ -123,41 +118,39 @@ df_deltaL_out <- df_deltaL_out %>% filter( df_deltaL_out$time >= 0)
 df_deltaA_out <- data.frame(date = temp$date, deltaA = unlist(lapply(temp$mean_temp,delta_A)))
 df_deltaA_out$time = as.numeric(df_deltaA_out$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
 df_deltaA_out <- df_deltaA_out %>% filter( df_deltaA_out$time >= 0)
-
-df_rho$time = as.numeric(df_rho$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
-df_rho <- df_rho %>% filter( df_rho$time >= 0)
-
-ggplot(df_gonot_out) +
-  geom_line(aes(date,gono)) +
-  ggtitle("Gonotrophic cycle")+
-  theme_bw()
-
-ggplot(df_dL_out) +
-  geom_line(aes(date,dL)) +
-  ggtitle("Larva development rate")+
-  theme_bw()
-
-ggplot(df_deltaL_out) +
-  geom_line(aes(date,deltaL)) +
-  ggtitle("Larva mortality rate")+
-  theme_bw()
-
-ggplot(df_deltaA_out) +
-  geom_line(aes(date,deltaA)) +
-  ggtitle("Adult mosquito mortality rate")+
-  theme_bw()
+# 
+# ggplot(df_gonot_out) +
+#   geom_line(aes(date,gono)) +
+#   ggtitle("Gonotrophic cycle")+
+#   theme_bw()
+# 
+# ggplot(df_dL_out) +
+#   geom_line(aes(date,dL)) +
+#   ggtitle("Larva development rate")+
+#   theme_bw()
+# 
+# ggplot(df_deltaL_out) +
+#   geom_line(aes(date,deltaL)) +
+#   ggtitle("Larva mortality rate")+
+#   theme_bw()
+# 
+# ggplot(df_deltaA_out) +
+#   geom_line(aes(date,deltaA)) +
+#   ggtitle("Adult mosquito mortality rate")+
+#   theme_bw()
 
 df_gonot_out$date <- NULL
 df_gonot_out <- df_gonot_out[,c(2,1)]
+head(df_gonot_out)
 df_dL_out$date <- NULL
 df_dL_out <- df_dL_out[,c(2,1)]
+head(df_dL_out)
 df_deltaL_out$date <- NULL
 df_deltaL_out <- df_deltaL_out[,c(2,1)]
+head(df_deltaL_out)
 df_deltaA_out$date <- NULL
 df_deltaA_out <- df_deltaA_out[,c(2,1)]
-df_rho$date <- NULL
-df_rho <- df_rho[,c(2,1)]
-
+head(df_deltaA_out)
 
 ###############   ODE INTEGRATION   ##################
 # require(deSolve)
@@ -174,7 +167,7 @@ dyn.load("model.so")
 f = 200
 K = 250000
 H = 160000
-omega_t = 0.2
+omega_t = 0.1
 trueSD = 1
 # We create a vector with the constant parameters.
 parms = c(f,K,H, omega_t)
@@ -185,8 +178,8 @@ forcs_mat <- list(data.matrix(df_gonot_out),
                   data.matrix(df_dL_out),
                   data.matrix(df_deltaL_out),
                   data.matrix(df_deltaA_out))
-min_t <- min(df_rho$time)
-max_t <- max(df_rho$time)
+min_t <- min(df_dL_out$time)
+max_t <- max(df_dL_out$time)
 times <- seq(min_t,max_t, 1)
 out <- ode(Y, times, func = "derivs",
            parms = parms, dllname = "model",
@@ -195,7 +188,7 @@ out <- ode(Y, times, func = "derivs",
            forcings = forcs_mat, fcontrol = list(method = "constant")) 
 
 ode <- data.frame(out) 
-
+ode$Sum <- NULL
 saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo.rds")
 
 
@@ -213,7 +206,7 @@ likelihood <- function(x) # forzamientos para el solver de la ode
     
     
     z <- ode(y=population,
-             times = 0:nrow(y), func = "derivs", method = "ode45",
+             times = 0:nrow(y), func = "derivs", 
              dllname = "model" , parms = pars,
              initfunc = "initmod", initforc = "forcc",
              forcings = forcs_mat, fcontrol = list(method = "constant")) 
@@ -273,12 +266,12 @@ run_metropolis_MCMC = function(startvalue, iterations){
     proposal = proposalfunction(chain[i,])
     print("Iteration:")
     print(i)
-    print("likelihood(proposal):")
-    print(likelihood(proposal))
-    print("prior(proposal):")
-    print(prior(proposal))
-    print("likelihood(chain[i,]):")
-    print(likelihood(chain[i,]))
+    # print("likelihood(proposal):")
+    # print(likelihood(proposal))
+    # print("prior(proposal):")
+    # print(prior(proposal))
+    # print("likelihood(chain[i,]):")
+    # print(likelihood(chain[i,]))
     probab = exp(likelihood(proposal)+ prior(proposal) - likelihood(chain[i,])- prior(chain[i,]))
     if (runif(1) < probab){
       chain[i+1,] = proposal
@@ -290,35 +283,35 @@ run_metropolis_MCMC = function(startvalue, iterations){
 
 
 startvalue = c(0.1,1)
-iterations = 10000
+iterations = 100
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-# filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_op_3eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
-# save(chain, file = filename)
-burnIn = 5000
-acceptance1 = 1-mean(duplicated(chain[-(1:burnIn),]))
+filename <- paste0("~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/chain_MH_op",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+save(chain, file = filename)
+# burnIn = 500
+# acceptance1 = 1-mean(duplicated(chain[-(1:burnIn),]))
 
 chain <- mcmc(chain)
-summary(chain)
-plot(chain)
+# summary(chain)
+# plot(chain)
 
-library(BayesianTools)
-correlationPlot(data.frame(chain))
+# library(BayesianTools)
+# correlationPlot(data.frame(chain))
 #
 # # Convergence diagnosis:
 #
 # print("Optimization finish")
-chain2 = run_metropolis_MCMC(startvalue, 10000)
-burnIn = 5000
-acceptance2 = 1-mean(duplicated(chain2[-(1:burnIn),]))
-
-chain2 <- mcmc(chain2)
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain2_MH_op_3eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+chain2 = run_metropolis_MCMC(startvalue, iterations)
+# burnIn = 5000
+# acceptance2 = 1-mean(duplicated(chain2[-(1:burnIn),]))
+# 
+# chain2 <- mcmc(chain2)
+filename <- paste0("~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/chain2_MH_op",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
-
-combinedchains = mcmc.list(chain, chain2)
-plot(combinedchains)
-gelman.diag(combinedchains)
-gelman.plot(combinedchains)
+# 
+# combinedchains = mcmc.list(chain, chain2)
+# plot(combinedchains)
+# gelman.diag(combinedchains)
+# gelman.plot(combinedchains)
 

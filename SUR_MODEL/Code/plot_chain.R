@@ -13,10 +13,10 @@ true2 = gam2
 true3 = gam3
 trueSD = 1
 # Easy plots:
-output <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain_MH_100eq1e+05.RData")
+output <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain_MH_100eq10000.RData")
 # output2 <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain2_MH_op_3eq_3param1e+05.RData")
 
-burnIn = 5000
+burnIn = 500
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 ### Summary: #######################
 
