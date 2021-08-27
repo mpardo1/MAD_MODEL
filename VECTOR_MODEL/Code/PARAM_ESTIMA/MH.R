@@ -283,7 +283,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 
 
 startvalue = c(0.1,1)
-iterations = 10000
+iterations = 100000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 filename <- paste0("~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/chain_MH_op",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
