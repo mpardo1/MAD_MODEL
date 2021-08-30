@@ -8,7 +8,7 @@ library("coda")
 true1 = 0.1
 trueSD = 1
 # Easy plots:
-output <- load("~/Documents/PHD/2021/Mosquito_model/OUTPUT/chain2_MH_op10000.RData")
+output <- load("~/Documents/PHD/2021/Mosquito_model/OUTPUT/chain_MH_op10000.RData")
 # output2 <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain2_MH_op_3eq_3param1e+05.RData")
 
 burnIn = 500
@@ -26,16 +26,12 @@ abline(v = trueSD, col="red" )
 
 plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
 abline(h = true1, col="red" )
-plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
-abline(h = true2, col="red" )
-plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
-abline(h = true3, col="red" )
-plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
+plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
 abline(h = trueSD, col="red" )
 
 
 # Plots from coda package:
-output <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain_MH_op_4eq_3param1e+05.RData")
+output <- load("~/Documents/PHD/2021/Mosquito_model/OUTPUT/chain_MH_op10000.RData")
 chain_mc <- mcmc(chain)
 summary(chain_mc)
 plot(chain_mc)

@@ -80,7 +80,7 @@ ll_ode <- function(x, # vector con los parámetros
            parms = pars, initforc = "forcc", forcings = forcs_mat, 
            fcontrol = list(method = "constant")) #Aquí corre el ODE
   
-  colnames(z)[2:7] <- c("P1", "P2", "P3", "P4", "P5")
+  colnames(z)[2:6] <- c("P1", "P2", "P3", "P4", "P5")
   
   z <- as.data.frame(z)
   z <- z[-1, ]
@@ -222,8 +222,8 @@ while(condition){
   # Seleccionamos las mejores combinaciones de parámetros para mandar una nueva
   # ronda, cogemos las combinaciones que estén a 2 unidades de distancia de la
   # mejor, o en su defecto, las 250 mejores combinaciones.
-  if(sols < 25){
-    index <- order(logl, decreasing = T)[1:25]
+  if(sols < 2){
+    index <- order(logl, decreasing = T)[1:2]
   } else {
     index <- order(logl, decreasing = T)[1:sols]
   }
@@ -251,5 +251,4 @@ while(condition){
   best <- best2
   round <- round + 1
 } 
-
 print("The optimization finished.")
