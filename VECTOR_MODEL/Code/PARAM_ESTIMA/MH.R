@@ -134,10 +134,10 @@ df_deltaA_out <- df_deltaA_out %>% filter( df_deltaA_out$time >= 0)
 #   ggtitle("Larva mortality rate")+
 #   theme_bw()
 # 
-# ggplot(df_deltaA_out) +
-#   geom_line(aes(date,deltaA)) +
-#   ggtitle("Adult mosquito mortality rate")+
-#   theme_bw()
+ggplot(df_deltaA_out) +
+  geom_line(aes(date,deltaA)) +
+  ggtitle("Adult mosquito mortality rate")+
+  theme_bw()
 
 df_gonot_out$date <- NULL
 df_gonot_out <- df_gonot_out[,c(2,1)]
@@ -266,12 +266,6 @@ run_metropolis_MCMC = function(startvalue, iterations){
     proposal = proposalfunction(chain[i,])
     print("Iteration:")
     print(i)
-    # print("likelihood(proposal):")
-    # print(likelihood(proposal))
-    # print("prior(proposal):")
-    # print(prior(proposal))
-    # print("likelihood(chain[i,]):")
-    # print(likelihood(chain[i,]))
     probab = exp(likelihood(proposal)+ prior(proposal) - likelihood(chain[i,])- prior(chain[i,]))
     if (runif(1) < probab){
       chain[i+1,] = proposal
@@ -282,8 +276,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 
-startvalue = c(0.1,1)
-iterations = 100000
+startvalue = c(0.03,0.7)
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 filename <- paste0("~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/chain_MH_op",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
