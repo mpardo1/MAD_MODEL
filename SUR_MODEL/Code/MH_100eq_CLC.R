@@ -241,7 +241,7 @@ posterior = function(param, y, forc){
 
 proposalfunction = function(param){
   vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
-                   ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
+                   ,abs(rnorm(1,mean = 0 ,sd = 0.1)))
   return(vec)
 }
 
@@ -251,8 +251,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   prop_mat <- vector("numeric", length = iterations)
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
-    print("iteration:")
-    print(i)
+    # print("iteration:")
+    # print(i)
     probab = exp(posterior(proposal,ob_data,forcs_mat) - posterior(chain[i,],ob_data,forcs_mat))
     prop_mat[i] <- probab
     if (runif(1) < probab){
