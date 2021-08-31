@@ -8,10 +8,10 @@ library("coda")
 true1 = 0.1
 trueSD = 1
 # Easy plots:
-output <- load("~/Documents/PHD/2021/Mosquito_model/OUTPUT/chain_MH_op10000.RData")
+output <- load("~/Documents/PHD/2021/Mosquito_model/OUTPUT/chain_MH_op1e+05.RData")
 # output2 <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain2_MH_op_3eq_3param1e+05.RData")
 
-burnIn = 500
+burnIn = 1
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 ### Summary: #######################
 

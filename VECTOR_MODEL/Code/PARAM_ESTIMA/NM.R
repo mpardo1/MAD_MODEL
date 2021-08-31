@@ -1,4 +1,4 @@
-(list = ls())
+rm(list = ls())
 library("parallel")
 library("tidyverse")
 library("deSolve")
@@ -153,7 +153,7 @@ dyn.load("model.so")
 f = 200
 K = 250000
 H = 160000
-omega_t = 0.1
+omega_t = 4
 trueSD = 1
 # We create a vector with the constant parameters.
 parms = c(f,K,H, omega_t)
@@ -175,6 +175,17 @@ out <- ode(Y, times, func = "derivs",
 
 ode <- data.frame(out) 
 ode$Sum <- NULL
+
+df_plot <- reshape2::melt(ode, id.vars = c("time"))
+ggplot(df_plot,aes(time, value))  +
+  geom_line(aes( colour = variable)) +
+  ylab("Counts") +
+  ggtitle("Vector dynamics")+
+  scale_color_manual(name = "",
+                     labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
+                     values=c('#FF00F6','#FF2C00','#FF2C23'))+
+  theme_bw()
+
 saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo.rds")
 # Función de c que corre la ODE -------------------------------------------
 
@@ -254,17 +265,11 @@ input2 <- ob_data[n_inicio:n_fin, ]
 # las series independientes.
 
 devs <- c()
-spl <- (input2$L)
+spl <- input2$A + input2$Ah
 fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
 devs[1] <- sd(spl - predict(fit)$y)
 
-spl <- input2$A
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[2] <- sd(spl - predict(fit)$y)
 
-spl <- input2$Ah
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[3] <- sd(spl - predict(fit)$y)
 # Forzamientos ------------------------------------------------------------
 
 # Registrations:
@@ -277,7 +282,7 @@ devs[3] <- sd(spl - predict(fit)$y)
 best <- -999999999 #LL inicial a mejorar
 
 # load("seeds_CAN.RData") #Cargamos seeds de los valores iniciales de los pars.
-seeds <- matrix( runif(100,0,1), ncol = 100, nrow = 1)
+seeds <- matrix(runif(10000,0,1), ncol = 10000, nrow = 1)
 sols <- NA #Pre-aloco el número de combinaciones paramétricas en 2 unidades de LL de la mejor
 
 set.seed(476468713)
@@ -293,7 +298,7 @@ round <- 1
 # sims <- 2 #Número de combinaciones paramétricas a explorar
 sims <- ncol(seeds) #Número de combinaciones paramétricas a explorar
 
-Cores <- 4 #Numero de cores a utilizar.
+Cores <- 16 #Numero de cores a utilizar.
 it <- 0
 while(condition){
   #Ahora viene la paralelización
@@ -336,8 +341,8 @@ while(condition){
   # Seleccionamos las mejores combinaciones de parámetros para mandar una nueva
   # ronda, cogemos las combinaciones que estén a 2 unidades de distancia de la
   # mejor, o en su defecto, las 250 mejores combinaciones.
-  if(sols < 2){
-    index <- order(logl, decreasing = T)[1:2]
+  if(sols < 250){
+    index <- order(logl, decreasing = T)[1:250]
   } else {
     index <- order(logl, decreasing = T)[1:sols]
   }

@@ -215,7 +215,7 @@ df_rho <- df_rho[,c(2,1)]
 # library.dynam.unload("deSolve", libpath=paste(.libPaths()[1], "//deSolve", sep=""))
 # library.dynam("deSolve", package="deSolve", lib.loc=.libPaths()[1])
 # OJOOOOO!!! Cuando cambias de PC borrar .o y .so.
-Path = "~/MAD_MODEL/VECTOR_MODEL/Code/"
+Path = "~/MAD_MODEL/VECTOR_MODEL/Code/INTEGRATION/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
@@ -248,6 +248,7 @@ ode <- data.frame(out)
 ode_df <- merge(ode, df_date, by ="time")
 ode_df$Sum <- NULL
 head(ode_df)
+colnames(ode_df) <- c("Time", "L", "Ah","A", "date" )
 df_L_A <- ode_df[,c(5,2,3)]
 df_Ah <- ode_df[,c(5,4)]
 df_L <- ode_df[,c(5,2)]
@@ -270,7 +271,7 @@ ggplot(df_plot_1,aes(date, value))  +
   theme(text = element_text(size=18))
 
 ggplot(df_Ah)  +
-  geom_line(aes(date, y3), color = "dark green") +
+  geom_line(aes(date, A), color = "dark green") +
   ylab("Counts") +
   ggtitle("Handling mosquitoes dynamics") +
   scale_color_manual(values=c('#FF00F6')) +
@@ -278,7 +279,7 @@ ggplot(df_Ah)  +
   theme(text = element_text(size=18))
 
 ggplot(df_L)  +
-  geom_line(aes(date, y1), color = "dark green") +
+  geom_line(aes(date, L), color = "dark green") +
   ylab("Counts") +
   ggtitle("Larvae dynamics") +
   scale_color_manual(values=c('#FF00F6')) +
