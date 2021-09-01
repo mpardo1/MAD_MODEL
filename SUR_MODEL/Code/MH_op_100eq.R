@@ -222,10 +222,10 @@ prior = function(param){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  # vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
-  # ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
-  vec <- c(rnorm(3, mean = param[1:3], sd= c(0.1,0.1,0.1))
-           ,abs(rnorm(1,mean = param[4] ,sd = 0.1)))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
+  ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
+  # vec <- c(rnorm(3, mean = param[1:3], sd= c(0.1,0.1,0.1))
+  #          ,abs(rnorm(1,mean = param[4] ,sd = 0.1)))
   
   return(vec)
 }
