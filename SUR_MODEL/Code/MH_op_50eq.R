@@ -200,24 +200,33 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,1,2.5,0.5)
-iterations = 10000
+iterations = 50000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-summary(chain)
-plot(chain)
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_op_50eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+save(chain, file = filename)
+# 
+# summary(chain)
+# plot(chain)
 
-library(BayesianTools)
-correlationPlot(data.frame(chain))
+# library(BayesianTools)
+# correlationPlot(data.frame(chain))
 
 # Convergence diagnosis:
 
-print("Optimization finish")
+# print("Optimization finish")
 chain2 = run_metropolis_MCMC(startvalue, 10000)
-combinedchains = mcmc.list(chain, chain2)
-plot(combinedchains)
-gelman.diag(combinedchains)
-gelman.plot(combinedchains)
+
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain2_MH_op_50eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+save(chain2, file = filename)
+# combinedchains = mcmc.list(chain, chain2)
+# plot(combinedchains)
+# gelman.diag(combinedchains)
+# gelman.plot(combinedchains)
 
 chain3 = run_metropolis_MCMC(startvalue, 10000)
-combinedchains = mcmc.list(chain, chain2,chain3)
-plot(combinedchains)
+
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain3_MH_op_50eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+save(chain3, file = filename)
+# combinedchains = mcmc.list(chain, chain2,chain3)
+# plot(combinedchains)
