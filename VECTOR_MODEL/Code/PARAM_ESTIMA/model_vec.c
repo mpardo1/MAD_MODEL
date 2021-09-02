@@ -30,11 +30,6 @@ void forcc(void (* odeforcs)(int *, double *))
   void derivs (int *neq, double *t, double *y, double *ydot,
                double *yout, int *ip)
 {
-/*
-  ydot[0] = i1*f*y[2]*(1 - (y[0]/K)) - 0.04*y[0] - i3*y[0];     //L
-  ydot[1] = 0.04*y[0] - i4*H - i5*y[1];				//A
-  ydot[2] = i4*H - i1*y[2] - i5*y[2];				//A^(h)
-  */
   ydot[0] = i1*f*y[2]*(1 - (y[0]/K)) - i2*y[0] - i3*y[0];     //L
   ydot[1] = i2*y[0] - omega*y[1]*H - i4*y[1];				//A
   ydot[2] = omega*y[1]*H  - i1*y[2] - i4*y[2];				//A^(h)
