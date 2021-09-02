@@ -39,3 +39,4 @@ Thumbs.db
 #R data files
 *.RData
 *.pdf
+*.Rhistory
