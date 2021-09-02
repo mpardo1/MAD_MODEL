@@ -9,12 +9,6 @@ Path_temp = "~/MAD_MODEL/VECTOR_MODEL/data/bcn_weather_daily.Rds"
 temp <-read_rds(Path_temp)
 temp$date = as.Date(temp$date , "%Y-%m-%d")
 temp <- temp %>%  group_by(date) %>% summarise(mean_temp = mean(valor))
-# 
-# ggplot(temp) +
-#   geom_line(aes(date, mean_temp))+
-#   ggtitle("Mean temperature Barcelona") + 
-#   xlab("Mean temperature")+
-#   theme_bw()
 
 # Gonotrophic cycle:
 gonot <- function(T){
@@ -57,29 +51,6 @@ df_gonot_vec <- data.frame(temp = vec, gonot =unlist(lapply(vec,gonot)))
 df_dL_vec <- data.frame(temp = vec, dL = unlist(lapply(vec,d_L)))
 df_deltaL_vec <- data.frame(temp = vec, deltaL = unlist(lapply(vec,delta_L)))
 df_deltaA_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,delta_A)))
-# df_dl_opt_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,dL_opt)))
-# 
-# ggplot(df_gonot_vec) + geom_line(aes(temp,gonot)) + 
-#   ggtitle("Inverse of the Gonotrophic cycle")+
-#   theme_bw()
-# 
-# ggplot(df_dL_vec) + geom_line(aes(temp,dL)) +
-#   ggtitle("Larva development rate")+
-#   theme_bw()
-# 
-# ggplot(df_deltaL_vec) + geom_line(aes(temp,deltaL)) +
-#   ggtitle("Larva mortality rate")+
-#   theme_bw()
-# 
-# ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) +
-#   ggtitle("Mosquito adult mortality rate")+
-#   theme_bw()
-
-# ggplot(df_dl_opt_vec) + geom_line(aes(temp,deltaA)) +
-#   ggtitle("Mosquito adult mortality rate")+
-#   theme_bw()
-
-
 # Compute the values of the functions/forcings with temp.
 # Compute the minimum date of the rho:
 min_date <- min(temp$date)
@@ -106,26 +77,6 @@ df_deltaL_out <- df_deltaL_out %>% filter( df_deltaL_out$time >= 0)
 df_deltaA_out <- data.frame(date = temp$date, deltaA = unlist(lapply(temp$mean_temp,delta_A)))
 df_deltaA_out$time = as.numeric(df_deltaA_out$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
 df_deltaA_out <- df_deltaA_out %>% filter( df_deltaA_out$time >= 0)
-# 
-# ggplot(df_gonot_out) +
-#   geom_line(aes(date,gono)) +
-#   ggtitle("Gonotrophic cycle")+
-#   theme_bw()
-# 
-# ggplot(df_dL_out) +
-#   geom_line(aes(date,dL)) +
-#   ggtitle("Larva development rate")+
-#   theme_bw()
-# 
-# ggplot(df_deltaL_out) +
-#   geom_line(aes(date,deltaL)) +
-#   ggtitle("Larva mortality rate")+
-#   theme_bw()
-# # 
-# ggplot(df_deltaA_out) +
-#   geom_line(aes(date,deltaA)) +
-#   ggtitle("Adult mosquito mortality rate")+
-#   theme_bw()
 
 df_gonot_out$date <- NULL
 df_gonot_out <- df_gonot_out[,c(2,1)]
@@ -153,7 +104,7 @@ dyn.load("model_vec.so")
 f = 200
 K = 250000
 H = 160000
-omega_t = 3000
+omega_t = 4
 trueSD = 100
 # We create a vector with the constant parameters.
 parms = c(f,K,H,omega_t)
@@ -188,6 +139,51 @@ ggplot(df_plot,aes(time, value))  +
 
 ggplot(ode) + 
   geom_line(aes(time,y3))
+
+colnames(ode) <- c("time","L","A","Ah")
+head(ode)
+
+omega_t = 3.45
+trueSD = 100
+# We create a vector with the constant parameters.
+parms = c(f,K,H,omega_t)
+# We set the initial conditions to zero.
+Y <- c(y1 = 100.0, y2 = 0.0, y3 = 0.0)
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(df_gonot_out),
+                  data.matrix(df_dL_out),
+                  data.matrix(df_deltaL_out),
+                  data.matrix(df_deltaA_out))
+min_t <- min(df_dL_out$time)
+max_t <- max(df_dL_out$time)
+times <- seq(min_t,max_t, 1)
+out2 <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_vec",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = forcs_mat, fcontrol = list(method = "constant")) 
+
+ode2 <- data.frame(out2) 
+ode2$Sum <- NULL
+
+df_plot2 <- reshape2::melt(ode2, id.vars = c("time"))
+ggplot(df_plot2,aes(time, value))  +
+  geom_line(aes( colour = variable)) +
+  ylab("Counts") +
+  ggtitle("Vector dynamics")+
+  scale_color_manual(name = "",
+                     labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
+                     values=c('#FF00F6','#FF2C00','#FF2C23'))+
+  theme_bw()
+
+ggplot(ode2) + 
+  geom_line(aes(time,y3))
+
+colnames(ode2) <- c("time","L","A","Ah")
+ode$sum <- ode$A + ode$Ah
+ode2$sum <- ode2$A + ode$Ah
+head(ode2)
+diff_df <- abs(ode - ode2)
 saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo.rds")
 # Función de c que corre la ODE -------------------------------------------
 
@@ -283,7 +279,7 @@ spl <- input2$A + input2$Ah
 fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
 devs[1] <- sd(spl - predict(fit)$y)
 
-y <- ob_data
+y <- ode
 # (x, # vector con los parámetros
 #   forcs_mat, # forzamientos para el solver de la ode
 #   y, # datos
@@ -296,7 +292,7 @@ slopelikelihoods <- lapply(x,likelyhood)
 slopelikelihoods_num <- as.numeric(unlist(slopelikelihoods))
 slopelikelihoods_num <- slopelikelihoods_num - trunc(slopelikelihoods_num)
 
-plot (seq(0.1, 7, by=.05), slopelikelihoods , type="l", xlab = "values of the omega", ylab = "Log likelihood")# Forzamientos ------------------------------------------------------------
+plot (seq(0.1, 7, by=.05), slopelikelihoods , type="l", xlab = "values of omega", ylab = "Log likelihood")# Forzamientos ------------------------------------------------------------
 
 # Registrations:
 # head(down)

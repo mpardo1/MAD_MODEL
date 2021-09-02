@@ -14,6 +14,9 @@ true3 = gam3
 trueSD = 1
 # Easy plots:
 output <- load("~/Documents/PHD/2021/SUR_Model/OUTPUT/chain_MH_op_100eq_3param10000.RData")
+# Ubuntu:
+output <- load("~/Documentos/PHD/2021/SUR_Model/RESULTS_ESTIMATION/MH/chain_MH_op_100eq_3param50000.RData")
+
 # output2 <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain2_MH_op_3eq_3param1e+05.RData")
 
 burnIn = 5000
@@ -46,6 +49,8 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
  
  # Plots from coda package:
  output <- load("~/Documents/PHD/2021/SUR_Model/OUTPUT/chain_MH_op_100eq_3param10000.RData")
+ # Ubuntu:
+ output <- load("~/Documentos/PHD/2021/SUR_Model/RESULTS_ESTIMATION/MH/chain_MH_op_100eq_3param50000.RData")
  chain_mc <- mcmc(chain)
  summary(chain_mc)
  plot(chain_mc)
@@ -56,6 +61,8 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
   # Convergence diagnosis:
   rm(output)
   output2 <- load("~/Documents/PHD/2021/SUR_Model/OUTPUT/chain2_MH_op_100eq_3param10000.RData")
+  # Ubuntu:
+  output <- load("~/Documentos/PHD/2021/SUR_Model/RESULTS_ESTIMATION/MH/chain2_MH_op_100eq_3param50000.RData")
   chain_mcmc2 <- mcmc(chain)
   plot(chain_mcmc2)
   combinedchains = mcmc.list(chain_mc, chain_mcmc2)
