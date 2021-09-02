@@ -136,16 +136,16 @@ prior = function(param){
   sd = param[4]
   aprior = dnorm(a, sd=1,  log = T)
   bprior = dnorm(b, sd=1,  log = T)
-  cprior = dnorm(c, sd=1,  log = T)
-  sdprior = dnorm(sd, sd=1,  log = T)
+  cprior = dnorm(c, sd=2,  log = T)
+  sdprior = dnorm(sd, sd=0.5,  log = T)
   return(aprior+bprior+cprior+sdprior)
 }
 
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
-                   ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.2))
+                   ,abs(rnorm(1,mean = 0 ,sd = 0.05)))
   return(vec)
 }
 
@@ -166,7 +166,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,1,2.5,0.5)
-iterations = 50000
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 summary(chain)
@@ -184,3 +184,35 @@ plot(combinedchains)
 gelman.diag(combinedchains)
 gelman.plot(combinedchains)
 
+chain3 = run_metropolis_MCMC(startvalue, 10000)
+combinedchains = mcmc.list(chain, chain2,chain3)
+plot(combinedchains)
+plot(chain3)
+
+
+burnIn = 5000
+acceptance = 1-mean(duplicated(chain3[-(1:burnIn),]))
+### Summary: #######################
+
+par(mfrow = c(2,4))
+hist(chain3[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
+abline(v = mean(chain3[-(1:burnIn),1]))
+abline(v = true1, col="red" )
+hist(chain3[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
+abline(v = mean(chain3[-(1:burnIn),2]))
+abline(v = true2, col="red" )
+hist(chain3[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
+abline(v = mean(chain3[-(1:burnIn),3]))#
+abline(v = true3, col="red" )
+hist(chain3[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
+abline(v = mean(chain3[-(1:burnIn),4]) )
+abline(v = trueSD, col="red" )
+
+plot(chain3[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
+abline(h = true1, col="red" )
+plot(chain3[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
+abline(h = true2, col="red" )
+plot(chain3[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
+abline(h = true3, col="red" )
+plot(chain3[-(1:burnIn),4], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
+abline(h = trueSD, col="red" )
