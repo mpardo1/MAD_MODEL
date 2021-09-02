@@ -200,7 +200,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,1,2.5,0.5)
-iterations = 50000
+iterations = 80000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_op_50eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
@@ -215,7 +215,7 @@ save(chain, file = filename)
 # Convergence diagnosis:
 
 # print("Optimization finish")
-chain2 = run_metropolis_MCMC(startvalue, 10000)
+chain2 = run_metropolis_MCMC(startvalue, iterations)
 
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain2_MH_op_50eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain2, file = filename)
@@ -224,7 +224,7 @@ save(chain2, file = filename)
 # gelman.diag(combinedchains)
 # gelman.plot(combinedchains)
 
-chain3 = run_metropolis_MCMC(startvalue, 10000)
+chain3 = run_metropolis_MCMC(startvalue, iterations)
 
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain3_MH_op_50eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain3, file = filename)
