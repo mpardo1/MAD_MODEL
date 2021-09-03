@@ -19,8 +19,8 @@ void initmod(void (* odeparms)(int *, double *))
   void derivs (int *neq, double *t, double *y, double *ydot,
                double *yout, int *ip)
 {
-  ydot[0] = 0.5*f*y[2]*(1 - (y[0]/K)) - 0.5*y[0] - 0.5*y[0];     //L
-  ydot[1] = 0.5*y[0] - omega*y[1]*H - 0.5*y[1];		    //A
-  ydot[2] = omega*y[1]*H  - 0.5*y[2] - 0.5*y[2];	            //A^(h)
+  ydot[0] = 0.05*f*y[2];//*(1 - (y[0]/K)) - 0.05*y[0] - 0.05*y[0];     //L
+  ydot[1] = 0.05*y[0] - omega*y[1]*H - 0.05*y[1];		    //A
+  ydot[2] = omega*y[1]*H  - 0.05*y[2] - 0.05*y[2];	            //A^(h)
 }
 /* END file age3classp.c */
