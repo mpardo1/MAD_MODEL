@@ -159,7 +159,7 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.1))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.1,0.1,0.5))
                    ,abs(rnorm(1,mean = 0 ,sd = 0.3)))
   return(vec)
 }
@@ -182,11 +182,11 @@ run_metropolis_MCMC = function(startvalue, iterations){
   return(chain)
 }
 
-startvalue = c(0.1,1,2.5,0.5)
-iterations = 10000
+startvalue = c(0.1,1,3.5,0.5)
+iterations = 1000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
-burnIn = 5000
+burnIn = 50
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 ### Summary: #######################
 

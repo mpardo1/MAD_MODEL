@@ -6,28 +6,36 @@ library("coda")
 
 # Params values:
 fec = 20
-K = 250000
-Hum = 160000
+K = 43
+Hum = 13
 omega_t = 0.2
-delta_L = 0.2
-delta_A = 0.1
+delta_L = 0.5
+delta_A = 3
 d_L = 0.8
 a = 0.01
 
 # Equilibrium points:
-Ah_eq <- K*(((omega_t*H)/(a+delta_A))*((delta_L)/(omega_t*H+delta_A))-(1/(a*fec ))*(d_L + delta_L))
-L_eq <- (a*fec *Ah_eq)/(((a*fec *Ah_eq)/K)+(d_L+delta_L))
-A_eq <- ((d_L)/(omega_t*H+delta_A))*L_eq
+eq_point <- function(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t){
+  Ah_eq <-  K*(((omega_t*Hum*d_L)/((a+delta_A)*(omega_t*Hum +delta_A)))-((1/(a*fec))*(d_L+delta_L)))
+  L_eq <- ((a*fec*Ah_eq)/((a*fec/K)*Ah_eq+(d_L+delta_L)))
+  A_eq <- ((d_L/(omega_t*Hum+delta_A))*((a*fec*Ah_eq)/(((a*fec/K)*Ah_eq)+(d_L+delta_L))))
+  eq <- c(L_eq, A_eq, Ah_eq)
+}
+
+
+vec_eq <- eq_point(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t)
 
 ode_value <- function(L, A, Ah){
   val <- c()
-  val[1] = a*fec *Ah*(1-(L/K))-(d_L+delta_L)*L
-  val[2] = d_L*L - (omega_t*H + delta_A)*A
-  val[3] = omega_t*H*A - (a + delta_A)*Ah
+  val[1] = a*fec*Ah*(1-(L/K))-(d_L+delta_L)*L
+  val[2] = d_L*L - (omega_t*Hum + delta_A)*A
+  val[3] = omega_t*Hum*A - (a + delta_A)*Ah
   return(val)
 }
 
-ode_value(L_eq,A_eq,Ah_eq)
+ode_value(vec_eq[1],vec_eq[2],vec_eq[3])
+ode_value(0,0,0)
+
 # Feasability condition:
 feasability_cond <- function(del_L, del_A, dev_L, gon, fec, Kar, Hum, omega){
   fes <- FALSE
@@ -38,7 +46,7 @@ feasability_cond <- function(del_L, del_A, dev_L, gon, fec, Kar, Hum, omega){
   return(fes)
 }
 
-feasability_cond(delta_L,delta_A,d_L,a,fec ,K,H,omega_t)
+feasability_cond(delta_L,delta_A,d_L,a,fec ,K,Hum,omega_t)
 ###############   ODE INTEGRATION   ##################
 Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
 # Path = paste(PC,Path, sep="")
@@ -50,7 +58,7 @@ dyn.load("model_vec_test.so")
 
 trueSD = 1
 # We create a vector with the constant parameters.
-parms = c(fec,K,H,omega_t,delta_L,delta_A,d_L,a)
+parms = c(fec = fec,Ka = K,H = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
 # We set the initial conditions to zero.
 Y <- c(y1 = L_eq, y2 = A_eq, y3 = Ah_eq)
 min_t <- 1
@@ -65,7 +73,7 @@ ode <- data.frame(out)
 ode$Sum <- NULL
 
 
-saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
+# saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
 df_plot <- reshape2::melt(ode, id.vars = c("time"))
 ggplot(df_plot,aes(time, value))  +
   geom_line(aes( colour = variable)) +
@@ -78,22 +86,44 @@ ggplot(df_plot,aes(time, value))  +
 
 #-----------------------------------------------------------------------------------
 # ODE system in R:
-vect<-function(t, state, parameters) {
+vect <- function(t, state, parameters) {
    with(as.list(c(state, parameters)),{
      # rate of change
-       dL <- a*fec*H*(1-(L/K)) - (d_L + delta_L) * L
-       dA <- -omega_t*A*Hum + d_L*L - delta_A*A
-       dH <- omega_t * A*Hum - a*H -delta_A*H
-      
+     
+       dL <-  gon*fecun *H*(1-(L/Ka))-(dev_L+del_L)*L
+       dA <-  dev_L*L - (omeg*H + del_A)*A
+       dH <-  omeg*H*A - (gon + del_A)*H
          # return the rate of change
          list(c(dL, dA, dH))
        }) # end with(as.list ...
 }
 
+fec = 20
+K = 43
+Hum = 13
+omega_t = 0.2
+delta_L = 0.5
+delta_A = 3
+d_L = 0.8
+a = 0.01
+
+vec_eq <- eq_point(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t)
+
 times <- seq(0, 100, by = 0.01)
-parameters <- c(fec = fec, K = K, Hum =Hum, omega_t = omega_t, delta_L = delta_L, delta_A = delta_A, d_L = d_L, a=a)
-state <- c(L = 10, A = 0, H = 0)
-out <- ode(y = state, times = times, func = vector, parms = parameters)
+parameters <- c(fecun = fec,Ka = K,H = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
+state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
+# state <- c(L = -2222.025, A = -317.4321, H = 13)
+out <- as.data.frame(ode(y = state, times = times, func = vect, parms = parameters))
+df_plot <- reshape2::melt(out, id.vars = c("time"))
+ggplot(df_plot,aes(time, value))  +
+  geom_line(aes( colour = variable)) +
+  ylab("Counts") +
+  ggtitle("Vector dynamics")+
+  scale_color_manual(name = "",
+                     labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
+                     values=c('#FF00F6','#FF2C00','#2F822B'))+
+  theme_bw()
+
 #-----------------------------------------------------------------------------------
 likelihood <- function(x) # forzamientos para el solver de la ode
 { 
