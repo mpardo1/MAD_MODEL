@@ -209,7 +209,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
     print(i)
     like1 <- posterior(proposal,ob_data,forcs_mat)
     like2 <- like[i]
-    probab = exp(like1 - like2)
+    probab = like1 - like2
     prop_mat[i] <- probab
     if (runif(1) < probab){
       chain[i+1,] = proposal
@@ -253,7 +253,7 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 # plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
 # abline(h = trueSD, col="red" )
 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_50eq_3param",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_50eq_3param_not_exp",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
