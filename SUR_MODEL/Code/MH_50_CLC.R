@@ -9,8 +9,8 @@ Path = "~/MAD_MODEL/SUR_MODEL/Code/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
-system("R CMD SHLIB model_5eq.c")
-dyn.load("model_5eq.so")
+system("R CMD SHLIB model_50eq.c")
+dyn.load("model_50eq.so")
 
 gam1 = 0.2
 gam2 = 1.2
@@ -223,7 +223,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,1,3.5,0.5)
-iterations = 50000
+iterations = 1000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50
