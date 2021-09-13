@@ -223,37 +223,37 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0.1,1,3.5,0.5)
-iterations = 1000
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 ### Summary: #######################
+# 
+# par(mfrow = c(2,4))
+# hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
+# abline(v = mean(chain[-(1:burnIn),1]))
+# abline(v = true1, col="red" )
+# hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
+# abline(v = mean(chain[-(1:burnIn),2]))
+# abline(v = true2, col="red" )
+# hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
+# abline(v = mean(chain[-(1:burnIn),3]))
+# abline(v = true3, col="red" )
+# hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
+# abline(v = mean(chain[-(1:burnIn),4]) )
+# abline(v = trueSD, col="red" )
+# 
+# plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
+# abline(h = true1, col="red" )
+# plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
+# abline(h = true2, col="red" )
+# plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
+# abline(h = true3, col="red" )
+# plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
+# abline(h = trueSD, col="red" )
 
-par(mfrow = c(2,4))
-hist(chain[-(1:burnIn),1],nclass=30, main="Posterior of a", xlab="True value = red line" )
-abline(v = mean(chain[-(1:burnIn),1]))
-abline(v = true1, col="red" )
-hist(chain[-(1:burnIn),2],nclass=30, main="Posterior of b", xlab="True value = red line")
-abline(v = mean(chain[-(1:burnIn),2]))
-abline(v = true2, col="red" )
-hist(chain[-(1:burnIn),3],nclass=30, main="Posterior of c", xlab="True value = red line")
-abline(v = mean(chain[-(1:burnIn),3]))
-abline(v = true3, col="red" )
-hist(chain[-(1:burnIn),4],nclass=30, main="Posterior of sd", xlab="True value = red line")
-abline(v = mean(chain[-(1:burnIn),4]) )
-abline(v = trueSD, col="red" )
-
-plot(chain[-(1:burnIn),1], type = "l", xlab="True value = red line" , main = "Chain values of a", )
-abline(h = true1, col="red" )
-plot(chain[-(1:burnIn),2], type = "l", xlab="True value = red line" , main = "Chain values of b", )
-abline(h = true2, col="red" )
-plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of c", )
-abline(h = true3, col="red" )
-plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
-abline(h = trueSD, col="red" )
-
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_5eq_3param",iterations,".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_50eq_3param",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
