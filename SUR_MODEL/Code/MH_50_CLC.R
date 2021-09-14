@@ -194,8 +194,8 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.001,0.001,0.005))
-                   ,abs(rnorm(1,mean = 0 ,sd = 0.003)))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.00001,0.00001,0.00005))
+                   ,abs(rnorm(1,mean = 0 ,sd = 0.00003)))
   return(vec)
 }
 
@@ -255,7 +255,7 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 # plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
 # abline(h = trueSD, col="red" )
 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_50eq_3param_not_exp",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_50eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
