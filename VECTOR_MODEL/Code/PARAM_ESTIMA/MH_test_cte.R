@@ -5,13 +5,13 @@ library("deSolve")
 library("coda")
 
 # Params values:
-fec = 20
-K = 43
-Hum = 13
+fec = 2000
+K = 43000
+Hum = 13554
 omega_t = 0.2
-delta_L = 0.5
-delta_A = 3
-d_L = 0.8
+delta_L = 0.2
+delta_A = 0.3
+d_L = 8
 a = 0.01
 
 # Equilibrium points:
@@ -52,29 +52,30 @@ Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
-system("R CMD SHLIB model_vec_test.c")
-dyn.load("model_vec_test.so")
-
+system("R CMD SHLIB model_vec_test1.c")
+dyn.load("model_vec_test1.so")
 
 trueSD = 1
 # We create a vector with the constant parameters.
-parms = c(fec = fec,Ka = K,H = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
+parms = c(fecun = fec, Ka = K, Hu = Hum, omeg = omega_t, del_L = delta_L, del_A = delta_A, dev_L = d_L, gon = a)
 # We set the initial conditions to zero.
-Y <- c(y1 = L_eq, y2 = A_eq, y3 = Ah_eq)
+eps = 0.001
+veq_eq <- vec_eq + eps
+# Y <- c(y1 = vec_eq[1], y2 = vec_eq[2], y3 = vec_eq[3])
+Y <- c(y1 = 10, y2 = 0, y3 = 0)
 min_t <- 1
-max_t <- 4200
+max_t <- 100
 times <- seq(min_t,max_t, 1)
-out <- ode(Y, times, func = "derivs", method = "ode45",
-           parms = parms, dllname = "model_vec_test",
+out1 <- as.data.frame(ode(Y, times, func = "derivs", method = "ode45",
+           parms = parms, dllname = "model_vec_test1",
            initfunc = "initmod", nout = 1,
-           outnames = "Sum") 
+           outnames = "Sum"))
 
-ode <- data.frame(out) 
-ode$Sum <- NULL
-
-
-# saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
-df_plot <- reshape2::melt(ode, id.vars = c("time"))
+# out1$y1 <- NULL
+# out1$y2 <- NULL
+out1$Sum <- NULL
+saveRDS(out1, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
+df_plot <- reshape2::melt(out1, id.vars = c("time"))
 ggplot(df_plot,aes(time, value))  +
   geom_line(aes( colour = variable)) +
   ylab("Counts") +
@@ -91,31 +92,33 @@ vect <- function(t, state, parameters) {
      # rate of change
      
        dL <-  gon*fecun *H*(1-(L/Ka))-(dev_L+del_L)*L
-       dA <-  dev_L*L - (omeg*H + del_A)*A
-       dH <-  omeg*H*A - (gon + del_A)*H
+       dA <-  dev_L*L - (omeg*Hu + del_A)*A
+       dH <-  omeg*Hu*A - (gon + del_A)*H
          # return the rate of change
          list(c(dL, dA, dH))
        }) # end with(as.list ...
 }
 
-fec = 20
-K = 43
-Hum = 13
+
+# Params values:
+fec = 2000
+K = 43000
+Hum = 13554
 omega_t = 0.2
-delta_L = 0.5
-delta_A = 3
-d_L = 0.8
+delta_L = 0.2
+delta_A = 0.3
+d_L = 8
 a = 0.01
 
 vec_eq <- eq_point(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t)
 
 times <- seq(0, 100, by = 0.01)
-parameters <- c(fecun = fec,Ka = K,H = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
+parameters <- c(fecun = fec,Ka = K,Hu = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
 state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
 # state <- c(L = -2222.025, A = -317.4321, H = 13)
-out <- as.data.frame(ode(y = state, times = times, func = vect, parms = parameters))
-df_plot <- reshape2::melt(out, id.vars = c("time"))
-ggplot(df_plot,aes(time, value))  +
+out2 <- as.data.frame(ode(y = state, times = times, func = vect, parms = parameters))
+df_plot2 <- reshape2::melt(out2, id.vars = c("time"))
+ggplot(df_plot2,aes(time, value))  +
   geom_line(aes( colour = variable)) +
   ylab("Counts") +
   ggtitle("Vector dynamics")+
@@ -131,7 +134,8 @@ likelihood <- function(x) # forzamientos para el solver de la ode
     print("Negative param")
     res = -86829146000
   }else{
-    pars <- c(f = f,K = K,H = H,omega = x[1]) # death rate group 2
+    print("Positive param")
+    pars <- c(fecun = fec,Ka = K,Hu = Hum,omeg = x[1],del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a) # death rate group 2
     
     sd_t <- x[2]
     
@@ -139,7 +143,7 @@ likelihood <- function(x) # forzamientos para el solver de la ode
     
     z <- ode(y=population,
              times = 0:nrow(y), func = "derivs", method = "ode45",
-             parms = parms, dllname = "model_vec_test",
+             parms = parms, dllname = "model_vec_test1",
              initfunc = "initmod", nout = 1,
              outnames = "Sum") 
 
@@ -179,7 +183,7 @@ y <- ob_data
 
 slopevalues = function(x){return(likelihood(c(x, trueSD)))}
 slopevalues(0.1)
-x <- seq(0.5, 10, by=.05)
+x <- seq(0.01, 100, by=.05)
 slopelikelihoods = lapply(x, slopevalues )
 plot (x, slopelikelihoods , type="l", xlab = "values of slope parameter a", ylab = "Log likelihood")
 # Prior distribution

@@ -13,9 +13,9 @@ true2 = gam2
 true3 = gam3
 trueSD = 1
 # Easy plots:
-output <- load("~/Documents/PHD/2021/SUR_Model/OUTPUT/chain_MH_op_100eq_3param10000.RData")
+output <- load("~/Documentos/PHD/2021/SUR_Model/OUTPUT/chain_MH_50eq_3param_not_exp10000_2021-09-14.RData")
 # Ubuntu:
-output <- load("~/Documentos/PHD/2021/SUR_Model/RESULTS_ESTIMATION/MH/chain_MH_op_100eq_3param50000.RData")
+# output <- load("~/Documentos/PHD/2021/SUR_Model/RESULTS_ESTIMATION/MH/chain_MH_op_100eq_3param50000.RData")
 
 # output2 <- load("~/Documents/PHD/2021/SUR_Model/PARAM_ESTIMATION/MH/Output/chain2_MH_op_3eq_3param1e+05.RData")
 

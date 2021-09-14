@@ -11,6 +11,7 @@ static double parms[8];
 #define dev_L parms[6]
 #define gon parms[7]
 
+
 /* initializers */
 void initmod(void (* odeparms)(int *, double *))
 {
@@ -18,13 +19,12 @@ void initmod(void (* odeparms)(int *, double *))
   odeparms(&N, parms);
 }
 
-
 /* Derivatives */
-  void derivs(double *t, double *y, double *ydot,
-               double *yout)
+  void derivs (int *neq, double *t, double *y, double *ydot,
+               double *yout, int *ip)
 {
-    ydot[0] = gon*fecun*y[2]*(1-(y[0]/Ka))-(dev_L+del_L)*y[0];  	//L
-    ydot[1] = dev_L*y[0] - (omeg*Hu + del_A)*y[1];	     		//A
-    ydot[2] = omeg*Hu*y[1] - (gon + del_A)*y[2];	     		//Ah
+    	ydot[0] =  gon*fecun *y[2]*(1-(y[0]/Ka))-(dev_L+del_L)*y[1];
+	ydot[1] =  dev_L*y[0] - (omeg*Hu + del_A)*y[1];
+	ydot[2] =  omeg*Hu*y[1] - (gon + del_A)*y[2];
 }
 /* END file age3classp.c */
