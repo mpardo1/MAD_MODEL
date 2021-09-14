@@ -298,7 +298,7 @@ round <- 1
 # sims <- 2 #Número de combinaciones paramétricas a explorar
 sims <- ncol(seeds) #Número de combinaciones paramétricas a explorar
 
-Cores <- 16 #Numero de cores a utilizar.
+Cores <- parallel::detectCores() #Numero de cores a utilizar.
 it <- 0
 while(condition){
   #Ahora viene la paralelización
