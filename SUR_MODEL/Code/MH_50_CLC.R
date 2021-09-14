@@ -207,8 +207,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   like[1] <- posterior(chain[1,],ob_data,forcs_mat)
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
-    print("Iteration:")
-    print(i)
+    # print("Iteration:")
+    # print(i)
     like1 <- posterior(proposal,ob_data,forcs_mat)
     like2 <- like[i]
     probab = exp(like1 - like2)
@@ -224,7 +224,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
   return(chain)
 }
 
-startvalue = c(0.1,1,3.5,0.5)
+startvalue = c(0.15,1.2,2.7,0.5)
 iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
