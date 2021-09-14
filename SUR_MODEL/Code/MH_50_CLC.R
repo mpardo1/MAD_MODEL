@@ -1,4 +1,6 @@
 rm(list = ls())
+start_time <- Sys.time()
+
 library("parallel")
 library("tidyverse")
 library("deSolve")
@@ -257,4 +259,7 @@ filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_50eq_3param_not_exp",ite
 save(chain, file = filename)
 
 print("Optimization finish")
-
+end_time <- Sys.time()
+diff_time <- end_time - start_time
+print("Execution time:")
+print(diff_time)
