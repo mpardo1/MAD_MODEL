@@ -211,8 +211,8 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 # plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
 # abline(h = trueSD, col="red" )
 # 
-# filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_50eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
-# save(chain, file = filename)
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_1000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+save(chain, file = filename)
 
 print("Optimization finish")
 end_time <- Sys.time()
