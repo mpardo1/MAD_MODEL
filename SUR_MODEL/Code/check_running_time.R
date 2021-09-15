@@ -13,6 +13,10 @@ ex_frame <- data.frame(iterations = c(seq(1,10,1),100,10000),
 ex_frame <- data.frame(iterations = c(1,10,50,100,500), 
                        ex_time = c(2.211089,8.057199, 34.4963,
                                    67.76064,349.3564))
+
+ex_frame <- data.frame(iterations = c(1,10,100,200), 
+                       ex_time = c(0.228083833333, 0.79517883333, 6.350967, 12.52312))
+
 ggplot(ex_frame) +
  geom_line(aes(iterations, ex_time))
 
@@ -32,6 +36,6 @@ ggplot(data = ex_frame, aes(x = iterations, y = ex_time)) +
         axis.line.y=element_line()) +
   ggtitle("Linear Model Fitted to Data")
 
-predict(fit, data.frame(iterations = 50000))/3600
+predict(fit, data.frame(iterations = 10000))/3600
 
 
