@@ -7,44 +7,44 @@ library("deSolve")
 
 # Create Pseudo data:
 # Create Pseudo Data:
-Path = "~/MAD_MODEL/SUR_MODEL/Code/"
-# Path = paste(PC,Path, sep="")
-
-setwd(Path)
-system("R CMD SHLIB model_2000eq.c")
-dyn.load("model_2000eq.so")
-
-gam1 = 0.2
-gam2 = 1.2
-gam3 = 3
-# We create a vector with the constant parameters.
-parms = c(gam1,gam2,gam3)
-# We set the initial conditions to zero.
-Y <-  matrix(0, nrow = 1, ncol=2000)
-Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
-down <- data.frame(t(read.table(Path, header=FALSE)))
-colnames(down) <- c("time", "down")
-
-# List with the data frames of the forcings, sort as the c code.
-forcs_mat <- list(data.matrix(down))
-
-min_t <- min(down$time)
-max_t <- max(down$time)
-times <- seq(min_t,max_t, 1)
-
-out <- ode(Y, times, func = "derivs",
-           parms = parms, dllname = "model_2000eq",
-           initfunc = "initmod", nout = 1,
-           outnames = "Sum", initforc = "forcc",
-           forcings = down, 
-           fcontrol = list(method = "constant")) 
-
-
-ode <- data.frame(out)
-ode$Sum <- NULL
-head(ode)
-ode_mat <- as.matrix(ode)
-saveRDS(ode, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
+# Path = "~/MAD_MODEL/SUR_MODEL/Code/"
+# # Path = paste(PC,Path, sep="")
+# 
+# setwd(Path)
+# system("R CMD SHLIB model_2000eq.c")
+# dyn.load("model_2000eq.so")
+# 
+# gam1 = 0.2
+# gam2 = 1.2
+# gam3 = 3
+# # We create a vector with the constant parameters.
+# parms = c(gam1,gam2,gam3)
+# # We set the initial conditions to zero.
+# Y <-  matrix(0, nrow = 1, ncol=2000)
+# Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
+# down <- data.frame(t(read.table(Path, header=FALSE)))
+# colnames(down) <- c("time", "down")
+# 
+# # List with the data frames of the forcings, sort as the c code.
+# forcs_mat <- list(data.matrix(down))
+# 
+# min_t <- min(down$time)
+# max_t <- max(down$time)
+# times <- seq(min_t,max_t, 1)
+# 
+# out <- ode(Y, times, func = "derivs",
+#            parms = parms, dllname = "model_2000eq",
+#            initfunc = "initmod", nout = 1,
+#            outnames = "Sum", initforc = "forcc",
+#            forcings = down, 
+#            fcontrol = list(method = "constant")) 
+# 
+# 
+# ode <- data.frame(out)
+# ode$Sum <- NULL
+# head(ode)
+# ode_mat <- as.matrix(ode)
+# saveRDS(ode, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
 
 # Función de c que corre la ODE -------------------------------------------
 
@@ -57,9 +57,9 @@ setwd(Path)
 system("R CMD SHLIB model_2000eq.c")
 dyn.load("model_2000eq.so")
 
-true1 = 0.2
-true2 = 1.2
-true3 = 3
+true1 = 0.0250265
+true2 = 0.146925
+true3 = 0.482396
 trueSD = 1
 # Likelihood function
 likelihood <- function(y, #datos
@@ -111,14 +111,18 @@ colnames(down) <- c("time", "down")
 head(down)
 forcs_mat <- data.matrix(down)
 
-# Pseudo Data to check the oprimization method.
-ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
-l <- nrow(ob_data)
-# ob_data[,2:1001] <- ob_data[,2:1001] + matrix(rnorm(l*2000,0,trueSD), ncol = 2000, nrow = l)
-
-
-head(ob_data)
-# Example: plot the likelihood profile of the slope.
+# Read Observed data:
+ob_data <-read.table("/home/marta/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
+ob_data <- t(ob_data[,1:2000])
+# 
+# # Pseudo Data to check the oprimization method.
+# ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
+# l <- nrow(ob_data)
+# # ob_data[,2:1001] <- ob_data[,2:1001] + matrix(rnorm(l*2000,0,trueSD), ncol = 2000, nrow = l)
+# 
+# 
+# head(ob_data)
+# # Example: plot the likelihood profile of the slope.
 # slopevalues <- function(par){
 #   return(likelihood(ob_data,c(par, true2,true3, trueSD),forcs_mat))
 # } 
@@ -180,8 +184,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   return(chain)
 }
 
-startvalue = c(0.18,1.2,3.1,0.5)
-iterations = 5000
+startvalue = c(0.02,0.1,0.4,0.5)
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50
