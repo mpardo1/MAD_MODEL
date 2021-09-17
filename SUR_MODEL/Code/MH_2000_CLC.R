@@ -112,7 +112,7 @@ head(down)
 forcs_mat <- data.matrix(down)
 
 # Read Observed data:
-ob_data <-read.table("/home/marta/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
+ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
 ob_data <- t(ob_data[,1:2000])
 # 
 # # Pseudo Data to check the oprimization method.
@@ -215,7 +215,7 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 # plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
 # abline(h = trueSD, col="red" )
 # 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_MH_2000eq_3param/_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
