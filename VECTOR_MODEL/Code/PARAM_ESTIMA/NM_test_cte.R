@@ -2,98 +2,68 @@ rm(list = ls())
 library("parallel")
 library("tidyverse")
 library("deSolve")
+library("coda")
+#-----------------------------------------------------------------------------------#
+# Equilibrium points:
+eq_point <- function(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t){
+  Ah_eq <-  K*(((omega_t*Hum*d_L)/((a+delta_A)*(omega_t*Hum +delta_A)))-((1/(a*fec))*(d_L+delta_L)))
+  L_eq <- ((a*fec*Ah_eq)/((a*fec/K)*Ah_eq+(d_L+delta_L)))
+  A_eq <- ((d_L/(omega_t*Hum+delta_A))*((a*fec*Ah_eq)/(((a*fec/K)*Ah_eq)+(d_L+delta_L))))
+  eq <- c(L_eq, A_eq, Ah_eq)
+}
 
-# Create Pseudo Data:
-Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
-# Path = paste(PC,Path, sep="")
-
-setwd(Path)
-system("R CMD SHLIB model_vec_cte.c")
-dyn.load("model_vec_cte.so")
-
-f = 200
-K = 250000
-H = 160000
-omega_t = 4
-trueSD = 100
-# We create a vector with the constant parameters.
-parms = c(f,K,H,omega_t)
-# We set the initial conditions to zero.
-Y <- c(y1 = 100.0, y2 = 0.0, y3 = 0.0)
-# List with the data frames of the forcings, sort as the c code.
-min_t <- 1
-max_t <- 365
-times <- seq(min_t,max_t, 1)
-out <- ode(Y, times, func = "derivs",
-           parms = parms, dllname = "model_vec_cte",
-           initfunc = "initmod", nout = 1,
-           outnames = "Sum") 
-
-ode <- data.frame(out) 
-ode$Sum <- NULL
-
-df_plot <- reshape2::melt(ode, id.vars = c("time"))
-ggplot(df_plot,aes(time, value))  +
-  geom_line(aes( colour = variable)) +
-  ylab("Counts") +
-  ggtitle("Vector dynamics")+
-  scale_color_manual(name = "",
-                     labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
-                     values=c('#FF00F6','#FF2C00','#FF2C23'))+
-  theme_bw()
-
-ggplot(ode) + 
-  geom_line(aes(time,y3))
-
-colnames(ode) <- c("time","L","A","Ah")
-head(ode)
-
-omega_t = 1
-trueSD = 100
-# We create a vector with the constant parameters.
-parms = c(f,K,H,omega_t)
-# We set the initial conditions to zero.
-Y <- c(y1 = 100.0, y2 = 0.0, y3 = 0.0)
-times <- seq(min_t,max_t, 1)
-out2 <- ode(Y, times, func = "derivs",
-           parms = parms, dllname = "model_vec_cte",
-           initfunc = "initmod", nout = 1,
-           outnames = "Sum") 
-
-ode2 <- data.frame(out2) 
-ode2$Sum <- NULL
-
-df_plot2 <- reshape2::melt(ode2, id.vars = c("time"))
-ggplot(df_plot2,aes(time, value))  +
-  geom_line(aes( colour = variable)) +
-  ylab("Counts") +
-  ggtitle("Vector dynamics")+
-  scale_color_manual(name = "",
-                     labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
-                     values=c('#FF00F6','#FF2C00','#FF2C23'))+
-  theme_bw()
-
-ggplot(ode2) + 
-  geom_line(aes(time,y3))
-
-colnames(ode2) <- c("time","L","A","Ah")
-sum1 <- ode$A + ode$Ah
-sum2 <- ode2$A + ode$Ah
-head(ode2)
-diff_df <- abs(sum1 - sum2)
-saveRDS(ode, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo.rds")
-# Función de c que corre la ODE -------------------------------------------
-
-# Esta función está adaptada para su uso con el paquete deSolve, el estándar en
-# R para las ODE
-Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
-# Path = paste(PC,Path, sep="")
-
-setwd(Path)
-system("R CMD SHLIB model_vec_cte.c")
-dyn.load("model_vec_cte.so")
+# Stability condition:
+feasability_cond <- function(del_L, del_A, dev_L, gon, fec, Kar, Hum, omega){
+  fes <- FALSE
+  val <- (gon*fec*omega*Hum*dev_L)/((gon + del_A)*(omega*Hum + del_A)*(dev_L + del_L))
+  if(val > 1){
+    fes <- TRUE
+  }
+  return(fes)
+}
 
 
+# ODE system in R:
+vect <- function(t, state, parameters) {
+  with(as.list(c(state, parameters)),{
+    # rate of change
+    
+    dL <-  gon*fecun*H*(1-(L/Ka))-(dev_L+del_L)*L
+    dA <-  dev_L*L - (omeg*Hu + del_A)*A
+    dH <-  omeg*Hu*A - (gon + del_A)*H
+    # return the rate of change
+    list(c(dL, dA, dH))
+  }) # end with(as.list ...
+}
+#-----------------------------------------------------------------------------------#
+
+# Params values:
+fec = 2000
+K = 43000
+Hum = 13554
+omega_t = 0.2
+delta_L = 0.2
+delta_A = 0.3
+d_L = 8
+a = 0.01
+
+vec_eq <- eq_point(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t)
+
+times <- seq(0, 100, by = 0.01)
+parameters <- c(fecun = fec,Ka = K,Hu = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
+state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
+# state <- c(L = -2222.025, A = -317.4321, H = 13)
+out2 <- as.data.frame(ode(y = state, times = times, func = vect, parms = parameters))
+# df_plot2 <- reshape2::melt(out2, id.vars = c("time"))
+# ggplot(df_plot2,aes(time, value))  +
+#   geom_line(aes( colour = variable)) +
+#   ylab("Counts") +
+#   ggtitle("Vector dynamics")+
+#   scale_color_manual(name = "",
+#                      labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
+#                      values=c('#FF00F6','#FF2C00','#2F822B'))+
+#   theme_bw()
+saveRDS(out2, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
 # Función que calcula la loglikelihood del modelo ----------------------------------
 
 # Esta será la función a optimizar

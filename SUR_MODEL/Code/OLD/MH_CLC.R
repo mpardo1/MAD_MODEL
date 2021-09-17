@@ -37,8 +37,8 @@ out <- ode(Y, times, func = "derivs",
            fcontrol = list(method = "constant")) 
 
 
-ode <- data.frame(out)
-ode$Sum <- NULL
+ode_o<- data.frame(out)
+ode_o$Sum <- NULL
 head(ode)
 
 saveRDS(ode, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_5eq.rds")

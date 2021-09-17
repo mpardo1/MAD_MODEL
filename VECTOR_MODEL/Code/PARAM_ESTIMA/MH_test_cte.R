@@ -61,8 +61,8 @@ parms = c(fecun = fec, Ka = K, Hu = Hum, omeg = omega_t, del_L = delta_L, del_A 
 # We set the initial conditions to zero.
 eps = 0.001
 veq_eq <- vec_eq + eps
-# Y <- c(y1 = vec_eq[1], y2 = vec_eq[2], y3 = vec_eq[3])
-Y <- c(y1 = 10, y2 = 0, y3 = 0)
+Y <- c(y1 = vec_eq[1], y2 = vec_eq[2], y3 = vec_eq[3])
+# Y <- c(y1 = 10, y2 = 0, y3 = 0)
 min_t <- 1
 max_t <- 100
 times <- seq(min_t,max_t, 1)
@@ -74,7 +74,7 @@ out1 <- as.data.frame(ode(Y, times, func = "derivs", method = "ode45",
 # out1$y1 <- NULL
 # out1$y2 <- NULL
 out1$Sum <- NULL
-saveRDS(out1, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
+
 df_plot <- reshape2::melt(out1, id.vars = c("time"))
 ggplot(df_plot,aes(time, value))  +
   geom_line(aes( colour = variable)) +
@@ -82,7 +82,7 @@ ggplot(df_plot,aes(time, value))  +
   ggtitle("Vector dynamics")+
   scale_color_manual(name = "",
                      labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
-                     values=c('#FF00F6','#FF2C00','#2F822B'))+
+                     values=c('#FF00F6','#FF2C00','#2F822B')) +
   theme_bw()
 
 #-----------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ vect <- function(t, state, parameters) {
    with(as.list(c(state, parameters)),{
      # rate of change
      
-       dL <-  gon*fecun *H*(1-(L/Ka))-(dev_L+del_L)*L
+       dL <-  gon*fecun*H*(1-(L/Ka))-(dev_L+del_L)*L
        dA <-  dev_L*L - (omeg*Hu + del_A)*A
        dH <-  omeg*Hu*A - (gon + del_A)*H
          # return the rate of change
@@ -102,20 +102,21 @@ vect <- function(t, state, parameters) {
 
 # Params values:
 fec = 2000
-K = 43000
+K = 4300
 Hum = 13554
 omega_t = 0.2
 delta_L = 0.2
 delta_A = 0.3
-d_L = 8
+d_L = 14
 a = 0.01
+feasability_cond(delta_L,delta_A,d_L,a,fec ,K,Hum,omega_t)
 
 vec_eq <- eq_point(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t)
 
 times <- seq(0, 100, by = 0.01)
 parameters <- c(fecun = fec,Ka = K,Hu = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
-state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
-# state <- c(L = -2222.025, A = -317.4321, H = 13)
+# state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
+state <- c(L = 10, A = -0, H = 0)
 out2 <- as.data.frame(ode(y = state, times = times, func = vect, parms = parameters))
 df_plot2 <- reshape2::melt(out2, id.vars = c("time"))
 ggplot(df_plot2,aes(time, value))  +
@@ -126,7 +127,7 @@ ggplot(df_plot2,aes(time, value))  +
                      labels = c("Larva", "Adult mosquito", "Adult handling mosquito"),
                      values=c('#FF00F6','#FF2C00','#2F822B'))+
   theme_bw()
-
+saveRDS(out2, file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
 #-----------------------------------------------------------------------------------
 likelihood <- function(x) # forzamientos para el solver de la ode
 { 
@@ -134,21 +135,21 @@ likelihood <- function(x) # forzamientos para el solver de la ode
     print("Negative param")
     res = -86829146000
   }else{
-    print("Positive param")
+    # print("Positive param")
     pars <- c(fecun = fec,Ka = K,Hu = Hum,omeg = x[1],
               del_L = delta_L,del_A = delta_A,dev_L = d_L,
               gon = a) # death rate group 2
     
     sd_t <- x[2]
     
-    population <- c(y1 = 10.0, y2 = 0.0, y3 = 0.0) #Vector inicial para ODE
+    population <- c(L=10.0, A=0.0,H= 0.0) #Vector inicial para ODE
     
-    z <- ode(y=population,
-             times = 0:nrow(y), func = "derivs", method = "ode45",
-             parms = parms, dllname = "model_vec_test1",
-             initfunc = "initmod", nout = 1,
-             outnames = "Sum")
-    # z <- ode(y = population, times = 0:nrow(y), func = vect, parms = parameters)
+    # z <- ode(y=population,
+             # times = 0:nrow(y), func = "derivs", method = "ode45",
+             # parms = parms, dllname = "model_vec_test1",
+             # initfunc = "initmod", nout = 1,
+             # outnames = "Sum")
+    z <- ode(y = population, times = 0:nrow(y), func = vect, parms = pars)
 
     #Aquí corre el ODE
     
@@ -184,11 +185,11 @@ true1 = omega_t
 
 y <- ob_data
 
-# slopevalues = function(x){return(likelihood(c(x, trueSD)))}
-# slopevalues(0.1)
-# x <- seq(0.01, 100, by=.05)
-# slopelikelihoods = lapply(x, slopevalues )
-# plot (x, slopelikelihoods , type="l", xlab = "values of slope parameter a", ylab = "Log likelihood")
+slopevalues = function(x){return(likelihood(c(x, trueSD)))}
+slopevalues(0.1)
+x <- seq(-1, 10, by=.05)
+slopelikelihoods = lapply(x, slopevalues )
+plot (x, slopelikelihoods , type="l", xlab = "values of slope parameter a", ylab = "Log likelihood")
 # Prior distribution
 prior = function(param){
   a = param[1]
