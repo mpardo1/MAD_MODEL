@@ -184,11 +184,11 @@ true1 = omega_t
 
 y <- ob_data
 
-slopevalues = function(x){return(likelihood(c(x, trueSD)))}
-slopevalues(0.1)
-x <- seq(0.01, 100, by=.05)
-slopelikelihoods = lapply(x, slopevalues )
-plot (x, slopelikelihoods , type="l", xlab = "values of slope parameter a", ylab = "Log likelihood")
+# slopevalues = function(x){return(likelihood(c(x, trueSD)))}
+# slopevalues(0.1)
+# x <- seq(0.01, 100, by=.05)
+# slopelikelihoods = lapply(x, slopevalues )
+# plot (x, slopelikelihoods , type="l", xlab = "values of slope parameter a", ylab = "Log likelihood")
 # Prior distribution
 prior = function(param){
   a = param[1]
