@@ -135,17 +135,20 @@ likelihood <- function(x) # forzamientos para el solver de la ode
     res = -86829146000
   }else{
     print("Positive param")
-    pars <- c(fecun = fec,Ka = K,Hu = Hum,omeg = x[1],del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a) # death rate group 2
+    pars <- c(fecun = fec,Ka = K,Hu = Hum,omeg = x[1],
+              del_L = delta_L,del_A = delta_A,dev_L = d_L,
+              gon = a) # death rate group 2
     
     sd_t <- x[2]
     
     population <- c(y1 = 10.0, y2 = 0.0, y3 = 0.0) #Vector inicial para ODE
     
-    z <- ode(y=population,
-             times = 0:nrow(y), func = "derivs", method = "ode45",
-             parms = parms, dllname = "model_vec_test1",
-             initfunc = "initmod", nout = 1,
-             outnames = "Sum") 
+    # z <- ode(y=population,
+    #          times = 0:nrow(y), func = "derivs", method = "ode45",
+    #          parms = parms, dllname = "model_vec_test1",
+    #          initfunc = "initmod", nout = 1,
+    #          outnames = "Sum") 
+    z <- ode(y = population, times = 0:nrow(y), func = vect, parms = parameters)
 
     #Aquí corre el ODE
     
