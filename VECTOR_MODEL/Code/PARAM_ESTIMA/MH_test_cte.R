@@ -143,12 +143,12 @@ likelihood <- function(x) # forzamientos para el solver de la ode
     
     population <- c(y1 = 10.0, y2 = 0.0, y3 = 0.0) #Vector inicial para ODE
     
-    # z <- ode(y=population,
-    #          times = 0:nrow(y), func = "derivs", method = "ode45",
-    #          parms = parms, dllname = "model_vec_test1",
-    #          initfunc = "initmod", nout = 1,
-    #          outnames = "Sum") 
-    z <- ode(y = population, times = 0:nrow(y), func = vect, parms = parameters)
+    z <- ode(y=population,
+             times = 0:nrow(y), func = "derivs", method = "ode45",
+             parms = parms, dllname = "model_vec_test1",
+             initfunc = "initmod", nout = 1,
+             outnames = "Sum")
+    # z <- ode(y = population, times = 0:nrow(y), func = vect, parms = parameters)
 
     #Aquí corre el ODE
     
