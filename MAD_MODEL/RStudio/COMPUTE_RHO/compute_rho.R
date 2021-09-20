@@ -496,9 +496,9 @@ ggplot(bg_traps) +
   ylab("Number of mosquito adults per human (BG estimation)") +
   theme_bw()
 
-l = length(bg_traps$prop)
+l = length(bg_traps$value)
 dt = 7
-mov = mov_avg(l,dt,bg_traps$prop)
+mov = mov_avg(l,dt,bg_traps$value)
 df_bg_mov <- data.frame(date = bg_traps$date, bg_counts = mov)
 
 ## Maxima área de influencia a mano alzada: 500/(pi*300^2) .
@@ -508,10 +508,10 @@ ggplot(df_bg_mov) +
   ylab("Adults mosquitoes per square meter") +
   theme_bw()
 
-l = length(bg_traps$prop)
-dt = 7
-mov = mov_avg(l,dt,bg_traps$prop)
-df_bg_mov <- data.frame(date = bg_traps$date, bg_counts = mov)
+# l = length(bg_traps$prop)
+# dt = 7
+# mov = mov_avg(l,dt,bg_traps$prop)
+# df_bg_mov <- data.frame(date = bg_traps$date, bg_counts = mov)
 
 df_tot <- merge(df_rho_mov, df_bg_mov, by = "date")
 df_tot$time <- NULL
@@ -522,12 +522,14 @@ ggplot(df_plot,aes(date,value)) +
   scale_color_manual(values=c('#9E329F','#1642FE'))
 
 
-###########SCATTER PLOTS########################
-# Plot of the correlation between the BG estimation and the rho(M) all MOVING AVERAGE.
-l = length(bg_traps$prop)
-dt = 7
-mov = mov_avg(l,dt,bg_traps$prop)
-df_bg_mov <- data.frame(date = bg_traps$date, mov_bg_count = mov)
+# ###########SCATTER PLOTS########################
+# # Plot of the correlation between the BG estimation and the rho(M) all MOVING AVERAGE.
+# l = length(bg_traps$prop)
+# dt = 7
+# # mov = mov_avg(l,dt,bg_traps$prop)
+# mov = mov_avg(l,dt,bg_traps$value)
+# 
+# df_bg_mov <- data.frame(date = bg_traps$date, mov_bg_count = mov)
 
 l = length(df_rho$rho)
 dt = 7
@@ -545,13 +547,12 @@ ggscatterstats(data = df_tot,
                ggplot.component = list(ggplot2::geom_rug(sides = "b"))) 
 
 
-ggscatterstats(
-  data = df_tot,
+ggscatterstats(data = df_tot,
   x = mov_bg_count,
   y = rho,
-  # making further customization with `ggplot2` functions
   ggplot.component = list(ggplot2::geom_rug(sides = "b"))
 )
+
 # Scatter splot with Pearson correlation coeficient.
 ggscatter(df_tot, x = "mov_bg_count", y = "rho", 
           add = "reg.line", conf.int = TRUE, 
