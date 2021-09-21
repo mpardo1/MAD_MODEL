@@ -22,37 +22,36 @@ feasability_cond <- function(del_L, del_A, dev_L, gon, fec, Kar, Hum, omega){
   return(fes)
 }
 
-
 # ODE system in R:
 vect <- function(t, state, parameters) {
   with(as.list(c(state, parameters)),{
     # rate of change
     
     dL <-  gon*fecun*H*(1-(L/Ka))-(dev_L+del_L)*L
-    dA <-  dev_L*L - (omeg*Hu + del_A)*A
-    dH <-  omeg*Hu*A - (gon + del_A)*H
+    dA <-  dev_L*L - (omeg + del_A)*A
+    dH <-  omeg*A - (gon + del_A)*H
     # return the rate of change
     list(c(dL, dA, dH))
   }) # end with(as.list ...
 }
-#-----------------------------------------------------------------------------------#
+
 
 # Params values:
 fec = 2000
-K = 43000
+K = 4300
 Hum = 13554
 omega_t = 0.2
 delta_L = 0.2
 delta_A = 0.3
-d_L = 8
+d_L = 14
 a = 0.01
 
 vec_eq <- eq_point(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t)
 
-times <- seq(0, 100, by = 0.01)
+times <- seq(0, 15, by = 0.01)
 parameters <- c(fecun = fec,Ka = K,Hu = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
-state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
-# state <- c(L = -2222.025, A = -317.4321, H = 13)
+# state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
+state <- c(L = 10, A = 0, H = 0)
 out2 <- as.data.frame(ode(y = state, times = times, func = vect, parms = parameters))
 # df_plot2 <- reshape2::melt(out2, id.vars = c("time"))
 # ggplot(df_plot2,aes(time, value))  +
@@ -72,18 +71,17 @@ ll_ode <- function(x, # Params
                    y, # datos
                    devs){ #desviaciones estándar para calcular la loglikelihood
   
-  # if(x[1] <=  0){
-  if(1 ==  0){
+ if(x <=  0){
     res = -86829146000
   }else{
-    pars <- c(f = f,K = K,H = H,omega = x[1])
-    cat("Pars:",pars, "\n")
-    population <- c(y1 = 100.0, y2 = 0.0, y3 = 0.0)
+    pars <- c(fecun = fec,Ka = K,Hu = Hum,omeg = x,
+              del_L = delta_L,del_A = delta_A,dev_L = d_L,
+              gon = a) # death rate group 2
     
-    z <- ode(y=population,
-             times = 0:nrow(y), func = "derivs", 
-             dllname = "model_vec_cte" , parms = pars,
-             initfunc = "initmod") 
+    cat("Pars:",pars, "\n")
+    population <- c( 10,0,0)
+    
+    z <-  as.data.frame(ode(y = state, times = times, func = vect, parms = parameters))
     
     #Aquí corre el ODE
     
@@ -100,18 +98,18 @@ ll_ode <- function(x, # Params
            sum(dnorm(A, mean = z$A , sd = 1, log = T))  +
            sum(dnorm(Ah, mean = z$Ah, sd = 1, log = T))  
   }
-  cat("res:",res, "\n")
+  # cat("res:",res, "\n")
   return(res)
 }
 
 # Carga datos -------------------------------------------------------------
 # Pseudo Data to check the oprimization method.
-ob_data <- readRDS(file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo.rds")
+ob_data <- readRDS(file = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/ode_pseudo_cte.rds")
 colnames(ob_data) <- c("time", "L", "A", "Ah")
 l <- nrow(ob_data)
-ob_data$L <- ob_data$L + rnorm(l,0,trueSD)
-ob_data$A <- ob_data$A + rnorm(l,0,trueSD)
-ob_data$Ah <- ob_data$Ah + rnorm(l,0,trueSD)
+# ob_data$L <- ob_data$L + rnorm(l,0,trueSD)
+# ob_data$A <- ob_data$A + rnorm(l,0,trueSD)
+# ob_data$Ah <- ob_data$Ah + rnorm(l,0,trueSD)
 head(ob_data)
 df_plot <- reshape2::melt(ob_data, id.vars = c("time"))
 ggplot(df_plot,aes(time, value))  +
@@ -147,20 +145,21 @@ spl <- input2$A + input2$Ah
 fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
 devs[1] <- sd(spl - predict(fit)$y)
 
-y <- ode
+y <- as.data.frame(ob_data)
 # (x, # vector con los parámetros
 #   forcs_mat, # forzamientos para el solver de la ode
 #   y, # datos
 #   devs)
 likelyhood <- function(x){
-  return(ll_ode(x,y,devs))
-}
-x <- seq(1, 500, by=.05)
+    return(ll_ode(x,y,devs))
+  }
+
+x <- seq(1.e-5, 1, by=.0001)
 slopelikelihoods <- lapply(x,likelyhood)
 slopelikelihoods_num <- as.numeric(unlist(slopelikelihoods))
 slopelikelihoods_num <- slopelikelihoods_num - trunc(slopelikelihoods_num)
 
-plot (x, slopelikelihoods , type="l", xlab = "values of omega", ylab = "Log likelihood")# Forzamientos ------------------------------------------------------------
+plot (x, slopelikelihoods_num , type="l", xlab = "values of omega", ylab = "Log likelihood")# Forzamientos ------------------------------------------------------------
 plot (x, slopelikelihoods , type="l", xlab = "values of omega", ylab = "Log likelihood")# Forzamientos ------------------------------------------------------------
 
 # Registrations:

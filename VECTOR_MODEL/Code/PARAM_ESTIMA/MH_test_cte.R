@@ -92,8 +92,8 @@ vect <- function(t, state, parameters) {
      # rate of change
      
        dL <-  gon*fecun*H*(1-(L/Ka))-(dev_L+del_L)*L
-       dA <-  dev_L*L - (omeg*Hu + del_A)*A
-       dH <-  omeg*Hu*A - (gon + del_A)*H
+       dA <-  dev_L*L - (omeg + del_A)*A
+       dH <-  omeg*A - (gon + del_A)*H
          # return the rate of change
          list(c(dL, dA, dH))
        }) # end with(as.list ...
@@ -113,7 +113,7 @@ feasability_cond(delta_L,delta_A,d_L,a,fec ,K,Hum,omega_t)
 
 vec_eq <- eq_point(delta_L, delta_A, d_L, a, fec, K, Hum, omega_t)
 
-times <- seq(0, 100, by = 0.01)
+times <- seq(0, 20, by = 0.01)
 parameters <- c(fecun = fec,Ka = K,Hu = Hum,omeg = omega_t,del_L = delta_L,del_A = delta_A,dev_L = d_L,gon = a)
 # state <- c(L = vec_eq[1], A = vec_eq[2], H = vec_eq[3])
 state <- c(L = 10, A = -0, H = 0)
@@ -149,7 +149,7 @@ likelihood <- function(x) # forzamientos para el solver de la ode
              # parms = parms, dllname = "model_vec_test1",
              # initfunc = "initmod", nout = 1,
              # outnames = "Sum")
-    z <- ode(y = population, times = 0:nrow(y), func = vect, parms = pars)
+    z <- ode(y = population, times = 0:nrow(y), method = "ode45", func = vect, parms = pars)
 
     #Aquí corre el ODE
     
@@ -187,7 +187,7 @@ y <- ob_data
 
 slopevalues = function(x){return(likelihood(c(x, trueSD)))}
 slopevalues(0.1)
-x <- seq(-1, 10, by=.05)
+x <- seq(1.e-4, 10, by=.05)
 slopelikelihoods = lapply(x, slopevalues )
 plot (x, slopelikelihoods , type="l", xlab = "values of slope parameter a", ylab = "Log likelihood")
 # Prior distribution
