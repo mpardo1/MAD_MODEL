@@ -17,8 +17,8 @@ ex_frame <- data.frame(iterations = c(1,10,50,100,500),
 ex_frame <- data.frame(iterations = c(1,10,100,200), 
                        ex_time = c(0.228083833333, 0.79517883333, 6.350967, 12.52312))
 
-ex_frame <- data.frame(iterations = c(1,10,100,150), 
-                       ex_time = c(0.45304466667, 1.607306, 13.35163, 20.03861))
+ex_frame <- data.frame(iterations = c(1,10,100,150, 7000), 
+                       ex_time = c(0.45304466667, 1.607306, 13.35163, 20.03861,480.88494))
 
 ggplot(ex_frame) +
  geom_line(aes(iterations, ex_time))

@@ -43,7 +43,7 @@ acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
  abline(h = true2, col="red" )
  plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = expression(paste('Chain values of ', gamma[3])), )
  abline(h = true3, col="red" )
- plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
+ plot(chain[-(1:burnIn),4], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
  abline(h = trueSD, col="red" )
 
  
