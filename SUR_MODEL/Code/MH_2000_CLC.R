@@ -112,7 +112,7 @@ head(down)
 forcs_mat <- data.matrix(down)
 
 # Read Observed data:
-# ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
+ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
 ob_data <- t(ob_data[,1:2000])
 # 
 # # Pseudo Data to check the oprimization method.
@@ -190,6 +190,7 @@ chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
+print(paste0("Acceptance rate: ", acceptance))
 ### Summary: #######################
 # 
 # par(mfrow = c(2,4))
