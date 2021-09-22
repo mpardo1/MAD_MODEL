@@ -96,7 +96,7 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.08,0.08,0.08))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.001,0.001,0.001))
                    ,abs(rnorm(1,mean = 0 ,sd = 0.0008)))
   return(vec)
 }

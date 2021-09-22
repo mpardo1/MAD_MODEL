@@ -144,7 +144,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0,0,0,1)
-iterations = 1000
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50
@@ -152,7 +152,7 @@ burnIn = 50
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 print(paste0("Acceptance rate: ", acceptance))
 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_IC_0_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_sum_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
