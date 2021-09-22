@@ -217,7 +217,7 @@ print(paste0("Acceptance rate: ", acceptance))
 # plot(chain[-(1:burnIn),3], type = "l", xlab="True value = red line" , main = "Chain values of sd", )
 # abline(h = trueSD, col="red" )
 # 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain2_IC_0_03_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain3_IC_0_03_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
