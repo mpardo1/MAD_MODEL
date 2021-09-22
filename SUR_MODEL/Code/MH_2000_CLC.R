@@ -96,7 +96,7 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.0008,0.0008,0.0008))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.08,0.08,0.08))
                    ,abs(rnorm(1,mean = 0 ,sd = 0.0008)))
   return(vec)
 }
@@ -126,7 +126,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
   return(chain)
 }
 
-startvalue = c(0.03,0.1,0.4,0.5)
+startvalue = c(0,0,0,0)
 iterations = 20000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
@@ -135,7 +135,7 @@ burnIn = 50
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 print(paste0("Acceptance rate: ", acceptance))
 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_IC_0_03_var_0_0008_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_IC_0_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
