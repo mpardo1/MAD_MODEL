@@ -51,14 +51,23 @@ likelihood <- function(y, #datos
     z <- as.data.frame(z)
     z <- z[-1, ]
     
-    res <- 0
-    for(i in c(1:2000)){
-      res <- res +  sum(dnorm( y[,i+1], mean = z[,i+1], sd = sd, log = T))
-    }
+    # Sum the columns of the ode integration:
+    sum_group1 <- rowSums(z[,2:31])
+    sum_group2 <- rowSums(z[,31:648])
+    sum_group3 <- rowSums(z[,648:2000])
+    
+    # Remove the df of solutions z:
+    rm(z)
+    
+    # Compute the LL:
+      res <- sum(dnorm( y$sum1, mean = sum_group1, sd = sd, log = T)) + 
+              sum(dnorm( y$sum2, mean = sum_group2, sd = sd, log = T)) + 
+              sum(dnorm( y$sum3, mean = sum_group3, sd = sd, log = T)) 
+    
   }
   
-  # print("res:")
-  # print(res)
+  print("res:")
+  print(res)
   return(res)
 }
 
@@ -73,7 +82,11 @@ forcs_mat <- data.matrix(down)
 # Read Observed data:
 ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
 ob_data <- t(ob_data[,1:2000])
+sum_1 <- rowSums(ob_data[,2:31])
+sum_2 <- rowSums(ob_data[,31:648])
+sum_3 <- rowSums(ob_data[,648:2000])
 
+ob_data <- data.frame(time = ob_data[,1], sum1 = sum_1 , sum2 = sum_2 , sum3 = sum_3 )
 # Prior distribution
 prior = function(param){
   a = param[1]
@@ -107,6 +120,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   chain[1,] = startvalue
   prop_mat <- vector("numeric", length = iterations)
   like[1] <- posterior(chain[1,],ob_data,forcs_mat)
+  print("chain:")
+  print(chain[1,])
   for (i in 1:iterations){
     proposal = proposalfunction(chain[i,])
     print("Iteration:")
@@ -115,6 +130,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
     like2 <- like[i]
     probab = exp(like1 - like2)
     prop_mat[i] <- probab
+    print("probab:")
+    print(probab)
     if (runif(1) < probab){
       chain[i+1,] = proposal
       like[i+1] = like1
@@ -127,7 +144,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0,0,0,0)
-iterations = 10000
+iterations = 10
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50

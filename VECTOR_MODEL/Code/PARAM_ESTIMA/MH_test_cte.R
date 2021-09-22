@@ -5,13 +5,13 @@ library("deSolve")
 library("coda")
 
 # Params values:
-fec = 2000
+fec = 90
 K = 43000
 Hum = 13554
 omega_t = 0.2
 delta_L = 0.2
 delta_A = 0.3
-d_L = 8
+d_L = 0.8
 a = 0.01
 
 # Equilibrium points:
@@ -62,7 +62,7 @@ parms = c(fecun = fec, Ka = K, Hu = Hum, omeg = omega_t, del_L = delta_L, del_A 
 eps = 0.001
 veq_eq <- vec_eq + eps
 Y <- c(y1 = vec_eq[1], y2 = vec_eq[2], y3 = vec_eq[3])
-# Y <- c(y1 = 10, y2 = 0, y3 = 0)
+Y <- c(y1 = 10, y2 = 0, y3 = 0)
 min_t <- 1
 max_t <- 100
 times <- seq(min_t,max_t, 1)
@@ -90,7 +90,6 @@ ggplot(df_plot,aes(time, value))  +
 vect <- function(t, state, parameters) {
    with(as.list(c(state, parameters)),{
      # rate of change
-     
        dL <-  gon*fecun*H*(1-(L/Ka))-(dev_L+del_L)*L
        dA <-  dev_L*L - (omeg + del_A)*A
        dH <-  omeg*A - (gon + del_A)*H
