@@ -127,7 +127,7 @@ run_metropolis_MCMC = function(startvalue, iterations){
 }
 
 startvalue = c(0,0,0,1)
-iterations = 15000
+iterations = 10000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50
