@@ -27,7 +27,7 @@ likelihood <- function(y, #datos
 { 
   # print("x:")
   # print(x)
-  if(x[1] < 0 | x[2] < 0 | x[3] < 0 | x[4] == 0){
+  if(x[1] < 0 | x[2] < 0 | x[3] < 0 ){
     print("Negative param")
     res = -86829146000
   }else{
@@ -96,7 +96,7 @@ posterior = function(param, y, forc){
 ######## Metropolis algorithm ################
 
 proposalfunction = function(param){
-  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.001,0.001,0.001))
+  vec <- param + c(rnorm(3, mean = c(0,0,0), sd= c(0.0008,0.0008,0.0008))
                    ,abs(rnorm(1,mean = 0 ,sd = 0.0008)))
   return(vec)
 }
@@ -126,8 +126,8 @@ run_metropolis_MCMC = function(startvalue, iterations){
   return(chain)
 }
 
-startvalue = c(0,0,0,1)
-iterations = 20000
+startvalue = c(0.02,01,0.4,1)
+iterations = 25000
 chain = run_metropolis_MCMC(startvalue, iterations)
 
 burnIn = 50
