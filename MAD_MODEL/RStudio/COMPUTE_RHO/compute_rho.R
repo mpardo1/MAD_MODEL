@@ -174,7 +174,12 @@ reports$n_smooth <- smooth(reports$n)
 reports <- merge(reports,df_date, by ="time")
 
 ####### PLOT REPORTS #######
-report_fil = reports
+
+reports$n[reports$date > as.Date("2018-12-01" , "%Y-%m-%d") &
+              reports$date < as.Date("2019-04-01" , "%Y-%m-%d")] <- 0
+reports$n[reports$date > as.Date("2019-12-01" , "%Y-%m-%d") & 
+              reports$date < as.Date("2020-04-01" , "%Y-%m-%d")] <- 0
+
 ggplot(report_fil) + 
   geom_line(aes(date, n)) +
   #xlim(0,400) +

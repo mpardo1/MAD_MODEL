@@ -59,8 +59,8 @@ trueSD = 1
 # We create a vector with the constant parameters.
 parms = c(fecun = fec, Ka = K, Hu = Hum, omeg = omega_t, del_L = delta_L, del_A = delta_A, dev_L = d_L, gon = a)
 # We set the initial conditions to zero.
-eps = 0.001
-veq_eq <- vec_eq + eps
+# eps = 0.001
+# veq_eq <- vec_eq + eps
 Y <- c(y1 = vec_eq[1], y2 = vec_eq[2], y3 = vec_eq[3])
 Y <- c(y1 = 10, y2 = 0, y3 = 0)
 min_t <- 1

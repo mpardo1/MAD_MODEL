@@ -1,81 +1,100 @@
 rm(list = ls())
 library(easypackages)
-libraries("scales","gdata", "ggplot2",
-          "numbers","tidyverse","data.table",
-          "multiplex","reshape","viridis",
-          "stats","ggpubr","ggstatsplot",
-          "e1071","mlr3misc","deSolve",
-          "gganimate") 
+libraries("ggplot2","tidyverse","ggstatsplot","deSolve")
+
 # Rho data:
 Path = "~/MAD_MODEL/VECTOR_MODEL/data/df_rho.dat"
 df_rho <- data.frame(t(read.table(Path, header=FALSE)))
 colnames(df_rho) <- c("time", "rho", "date")
 df_rho$date = as.Date(df_rho$date , "%Y-%m-%d")
-df_rho$time <- NULL
 df_rho$rho <- as.numeric(df_rho$rho)
+
+min_date <- min(df_rho$date)
+max_date <- max(df_rho$date)
+df_rho$time <- as.numeric(df_rho$date - as.Date(min_date,"%Y-%m-%d") , units="days")
+df_rho$rho[df_rho$date > as.Date("2018-12-01" , "%Y-%m-%d") &
+             df_rho$date < as.Date("2019-04-01" , "%Y-%m-%d")] <- 0
+df_rho$rho[df_rho$date > as.Date("2019-12-01" , "%Y-%m-%d") & 
+             df_rho$date < as.Date("2020-04-01" , "%Y-%m-%d")] <- 0
+
 ggplot(df_rho) + 
   geom_line(aes(x = date, y =rho)) +
   ggtitle("Encounter rate computed from Citizen Science model") +
-  theme_bw()
-# Temperatures from Barcelona:
-Path_temp = "~/MAD_MODEL/VECTOR_MODEL/data/bcn_weather_daily.Rds"
-# Path_temp = paste(PC,Path_temp, sep="")
+  theme_bw() +
+  theme(text = element_text(size=14))
 
-temp <-read_rds(Path_temp)
-temp$date = as.Date(temp$date , "%Y-%m-%d")
-temp <- temp %>%  group_by(date) %>% summarise(mean_temp = mean(valor))
-
-ggplot(temp) +
-  geom_line(aes(date, mean_temp))+
-  ggtitle("Mean temperature Barcelona") + 
-  xlab("Mean temperature")+
-  theme_bw()
-
-
-
+df_date <- df_rho[,c(1,3)]
 ###############   ODE INTEGRATION   ##################
 
-# OJOOOOO!!! Cuando cambias de PC borrar .o y .so.
-Path = "~/MAD_MODEL/VECTOR_MODEL/Code/INTEGRATION/"
+Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
 # Path = paste(PC,Path, sep="")
 
 setwd(Path)
-system("R CMD SHLIB model.c")
-dyn.load("model.so")
+system("R CMD SHLIB model_vec_cte.c")
+dyn.load("model_vec_cte.so")
 
-f = 200
+fec = 100
 K = 250000
-H = 1600000
-# We create a vector with the constant parameters.
-parms = c(f,K,H)
-# We set the initial conditions to cero.
-Y <- c(y1 = 100.0, y2 = 0.0, y3 = 0.0)
+Hum = 13554
+omega_t = 0.2
+delta_L = 0.2
+delta_A = 0.3
+d_L = 0.8
+a = 0.01
+
+parms = c(fecun = fec, Ka = K, Hu = Hum, del_L = delta_L, del_A = delta_A, dev_L = d_L, gon = a)
+# We set the initial conditions to zero.
+Y <- c(y1 = 100, y2 = 0, y3 = 0)
+min_t <- 1
+max_t <- 100
+times <- seq(min_t,max_t, 1)
 # List with the data frames of the forcings, sort as the c code.
-forcs_mat <- list(data.matrix(df_gonot_out),
-                  data.matrix(df_dL_out),
-                  data.matrix(df_deltaL_out),
-                  data.matrix(df_rho),
-                  data.matrix(df_deltaA_out))
+# df_rho$rho[df_rho$rho == 0 ] <- 0.00000001
+forcs_mat <-data.matrix(df_rho[,1:2])
+
 min_t <- min(df_rho$time)
 max_t <- max(df_rho$time)
 times <- seq(min_t,max_t, 1)
 out <- ode(Y, times, func = "derivs",
-           parms = parms, dllname = "model",
+           parms = parms, dllname = "model_vec_cte", method = "ode45",
            initfunc = "initmod", nout = 1,
            outnames = "Sum", initforc = "forcc",
            forcings = forcs_mat, fcontrol = list(method = "constant")) 
 
+# Event :
+# This is where we define your event function
+# Add this directly above your call to ode()
+posfun <- function(t, y, parms){
+  with(as.list(y), {
+    y[which(y<0)] <- 0  
+    return(y)
+  })
+}
+
+
+out <- ode(Y, times=times, func = "derivs",
+           parms = parms, dllname = "model_vec_cte", method = "ode45",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = forcs_mat, fcontrol = list(method = "constant"),
+           events=list(func = posfun, time = c(0:max_t)))
+
 ode <- data.frame(out) 
+
 ode_df <- merge(ode, df_date, by ="time")
 ode_df$Sum <- NULL
 head(ode_df)
 colnames(ode_df) <- c("Time", "L", "Ah","A", "date" )
 df_L_A <- ode_df[,c(5,2,3)]
-df_Ah <- ode_df[,c(5,4)]
+df_Ah <- ode_df[,c(5,3)]
 df_L <- ode_df[,c(5,2)]
+df_A <- ode_df[,c(5,4)]
 df_plot_1 <- reshape2::melt(df_L_A, id.vars = c("date"))
 df_plot_L <- reshape2::melt(df_L, id.vars = c("date"))
+df_plot_Ah <- reshape2::melt(df_A, id.vars = c("date"))
 df_plot <- reshape2::melt(df_Ah, id.vars = c("date"))
+df_A$
+saveRDS(df_A, file = "~/MAD_MODEL/SUR_MODEL/Code/adults.rds")
 
 scientific_10 <- function(x) {
   parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
@@ -91,14 +110,6 @@ ggplot(df_plot_1,aes(date, value))  +
   theme_bw() + scale_y_continuous(labels = scientific_10)+
   theme(text = element_text(size=18))
 
-ggplot(df_Ah)  +
-  geom_line(aes(date, A), color = "dark green") +
-  ylab("Counts") +
-  ggtitle("Handling mosquitoes dynamics") +
-  scale_color_manual(values=c('#FF00F6')) +
-  theme_bw() + scale_y_continuous(labels = scientific_10)+
-  theme(text = element_text(size=18))
-
 ggplot(df_L)  +
   geom_line(aes(date, L), color = "dark green") +
   ylab("Counts") +
@@ -107,6 +118,22 @@ ggplot(df_L)  +
   theme_bw()+
   theme(text = element_text(size=16))
 
+ggplot(df_A)  +
+  geom_line(aes(date, A), color = "dark green") +
+  ylab("Counts") +
+  ggtitle("Adult mosquito dynamics") +
+  scale_color_manual(values=c('#FF2C00')) +
+  theme_bw()+
+  theme(text = element_text(size=16))
+
+
+ggplot(df_Ah)  +
+  geom_line(aes(date, Ah), color = "dark green") +
+  ylab("Counts") +
+  ggtitle("Handling Adult mosquito dynamics") +
+  theme_bw()+
+  theme(text = element_text(size=16)) +
+  scale_color_manual(values=c('#f0ff33')) 
 ###### Equilibrium points ######
 
 eq_point<- function(a,f,dL,deltaA,deltaL,chi,H,K){
