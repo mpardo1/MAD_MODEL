@@ -5,7 +5,7 @@ library("deSolve")
 library("coda")
 
 # Params values:
-fec = 90
+fec = 100
 K = 43000
 Hum = 13554
 omega_t = 0.2

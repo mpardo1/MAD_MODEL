@@ -6,13 +6,7 @@ libraries("scales","gdata", "ggplot2",
           "stats","ggpubr","ggstatsplot",
           "e1071","mlr3misc","deSolve",
           "gganimate") 
-# Different path for MAc and Ubuntu.
-# PC = "/Users/celsaaraujobarja/Documents"
-# PC = "/Users/celsaaraujobarja/Documents"
-#PC = "/home/marta/Documentos"
-#Path= "/home/marta/Documentos/PHD/2021/SUR_Model/Code/OUTPUT/df_rho.dat"
-# Path_rel= "/PHD/2021/SUR_Model/Code/OUTPUT/df_rho.dat"
-# Path = paste(PC,Path_rel, sep="")
+# Rho data:
 Path = "~/MAD_MODEL/VECTOR_MODEL/data/df_rho.dat"
 df_rho <- data.frame(t(read.table(Path, header=FALSE)))
 colnames(df_rho) <- c("time", "rho", "date")
