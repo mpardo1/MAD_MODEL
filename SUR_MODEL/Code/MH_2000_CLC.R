@@ -16,10 +16,39 @@ setwd(Path)
 system("R CMD SHLIB model_2000eq.c")
 dyn.load("model_2000eq.so")
 
-true1 = 0.0250265
-true2 = 0.146925
-true3 = 0.482396
+gam1 = 0.0250265
+gam2 = 0.146925
+gam3 = 0.482396
 trueSD = 1
+
+# We create a vector with the constant parameters.
+parms = c(gam1,gam2,gam3)
+# We set the initial conditions to zero.
+Y  <- matrix(0, nrow = 1, ncol=2000)
+Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
+down <- data.frame(t(read.table(Path, header=FALSE)))
+colnames(down) <- c("time", "down")
+
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(down))
+
+min_t <- min(down$time)
+max_t <- max(down$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_2000eq",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = down, 
+           fcontrol = list(method = "constant")) 
+
+
+ode_o <- data.frame(out)
+ode_o$Sum <- NULL
+head(ode_o)
+
+saveRDS(ode_o, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
+
 # Likelihood function
 likelihood <- function(y, #datos
                        x, # vector con los parámetros
@@ -74,6 +103,27 @@ forcs_mat <- data.matrix(down)
 ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
 ob_data <- t(ob_data[,1:2000])
 
+# Pseudo Data to check the oprimization method.
+ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
+y <- ob_data
+# Example: plot the likelihood profile of the slope.
+slopevalues <- function(par){
+  return(likelihood(ob_data,c(par[1],par[2],gam3, trueSD),forcs_mat))
+} 
+
+mat <- as.matrix(expand.grid(seq(0,1,0.0001), seq(0,1,0.0001)))
+slopelikelihoods <- apply(mat,1, slopevalues)
+mat <- as.data.frame(mat)
+mat$LL <- slopelikelihoods
+l <- length(mat$X)
+mat <- mat[2:l,]
+colnames(mat) <- c("X","Y","Z")
+ggplot(mat, aes(X, Y, fill= Z)) + 
+  geom_tile() +
+  xlab(expression( gamma[1])) +
+  ylab(expression( gamma[1])) + 
+  xlim(c(0,5)) + ylim(c(0,5))
+
 # Prior distribution
 prior = function(param){
   a = param[1]
@@ -126,17 +176,22 @@ run_metropolis_MCMC = function(startvalue, iterations){
   return(chain)
 }
 
-startvalue = c(0.02,01,0.4,1)
+num_chains = 3
 iterations = 25000
-chain = run_metropolis_MCMC(startvalue, iterations)
+startvalue = c(0.02,01,0.4,1)
+for(i in c(1:num_chains)){
+  paste("chain_",i) = run_metropolis_MCMC(startvalue, iterations)
+  filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_",i,"_IC_0_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") 
+  save(chain, file = filename)
+}
+
 
 burnIn = 50
 
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 print(paste0("Acceptance rate: ", acceptance))
 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_IC_0_MH_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
-save(chain, file = filename)
+
 
 print("Optimization finish")
 end_time <- Sys.time()
