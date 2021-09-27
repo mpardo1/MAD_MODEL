@@ -152,7 +152,7 @@ burnIn = 50
 acceptance = 1-mean(duplicated(chain[-(1:burnIn),]))
 print(paste0("Acceptance rate: ", acceptance))
 
-filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_var_0.0008_sum_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/chain_var_0_0008_sum_2000eq_3param_",iterations,"_",Sys.Date(),".RData") #Salva cada ronda de optimizaciones, por si acaso
 save(chain, file = filename)
 
 print("Optimization finish")
