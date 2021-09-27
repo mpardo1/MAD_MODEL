@@ -87,6 +87,27 @@ sum_2 <- rowSums(ob_data[,31:648])
 sum_3 <- rowSums(ob_data[,648:2000])
 
 ob_data <- data.frame(time = ob_data[,1], sum1 = sum_1 , sum2 = sum_2 , sum3 = sum_3 )
+
+y <- ob_data
+# Example: plot the likelihood profile of the slope.
+slopevalues <- function(par){
+  return(likelihood(ob_data,c(par[1],par[2],gam3, trueSD),forcs_mat))
+} 
+
+length(seq(0,0.5,0.01))
+mat <- as.matrix(expand.grid(seq(0,0.5,0.01), seq(0,0.5,0.01)))
+slopelikelihoods <- apply(mat,1, slopevalues)
+mat <- as.data.frame(mat)
+mat$LL <- slopelikelihoods
+l <- length(mat$X)
+mat <- mat[2:l,]
+colnames(mat) <- c("X","Y","Z")
+ggplot(mat, aes(X, Y, fill= Z)) + 
+  geom_tile() +
+  xlab(expression( gamma[1])) +
+  ylab(expression( gamma[1])) + 
+  xlim(c(0,5)) + ylim(c(0,5))
+
 # Prior distribution
 prior = function(param){
   a = param[1]
