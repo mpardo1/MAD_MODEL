@@ -3,59 +3,18 @@ library("parallel")
 library("tidyverse")
 library("deSolve")
 
-# Create pseudo data:
-# Create Pseudo Data:
+# Load C code:
 Path = "~/MAD_MODEL/SUR_MODEL/Code/"
-# Path = paste(PC,Path, sep="")
-
 setwd(Path)
-system("R CMD SHLIB model_5eq.c")
-dyn.load("model_5eq.so")
+system("R CMD SHLIB model_2000eq.c")
+dyn.load("model_2000eq.so")
 
-gam1 = 0.2
-gam2 = 1.2
-gam3 = 3
-# We create a vector with the constant parameters.
-parms = c(gam1,gam2,gam3)
-# We set the initial conditions to zero.
-Y <- c(y1 = 0, y2=0, y3=0, y4 = 0, y5 = 0)
-Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
-down <- data.frame(t(read.table(Path, header=FALSE)))
-colnames(down) <- c("time", "down")
-
-# List with the data frames of the forcings, sort as the c code.
-forcs_mat <- list(data.matrix(down))
-
-min_t <- min(down$time)
-max_t <- max(down$time)
-times <- seq(min_t,max_t, 1)
-out <- ode(Y, times, func = "derivs",
-           parms = parms, dllname = "model_5eq",
-           initfunc = "initmod", nout = 1,
-           outnames = "Sum", initforc = "forcc",
-           forcings = down, 
-           fcontrol = list(method = "constant")) 
-
-
-ode <- data.frame(out)
-ode$Sum <- NULL
-# head(ode)
-
-saveRDS(ode, file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_5eq.rds")
-# Función de c que corre la ODE -------------------------------------------
-
-# Esta función está adaptada para su uso con el paquete deSolve, el estándar en
-# R para las ODE
-Path = "~/MAD_MODEL/SUR_MODEL/Code/"
-# Path = paste(PC,Path, sep="")
-
-setwd(Path)
-system("R CMD SHLIB model_5eq.c")
-dyn.load("model_5eq.so")
-
+# Real value parameters:
+gam1 = 0.0250265
+gam2 = 0.146925
+gam3 = 0.482396
 
 # Función que calcula la loglikelihood del modelo ----------------------------------
-
 # Esta será la función a optimizar
 
 ll_ode <- function(x, # vector con los parámetros
@@ -70,50 +29,40 @@ ll_ode <- function(x, # vector con los parámetros
             gam2 = x[2], # death rate group 2
             gam3 = x[3]) # death rate group 3
   
-  population <- c(y1 = 0.0, y2 = 0.0, y3 = 0.0, y4 = 0.0, y5 = 0.0) #Vector inicial para ODE
+  population <- matrix(0,nrow = 1,ncol=2000) #Vector inicial para ODE
   
   forcs_mat <- list(data.matrix(forcings))
   
+  
   z <- ode(y = population,
            times = 0:nrow(y), func = "derivs", method = "ode45",
-           dllname = "model_5eq", initfunc = "initmod", nout = 0, 
+           dllname = "model_2000eq", initfunc = "initmod", nout = 0, 
            parms = pars, initforc = "forcc", forcings = forcs_mat, 
            fcontrol = list(method = "constant")) #Aquí corre el ODE
-  
-  colnames(z)[2:6] <- c("P1", "P2", "P3", "P4", "P5")
   
   z <- as.data.frame(z)
   z <- z[-1, ]
   
-  P1 <- y$X1
-  P2 <- y$X2
-  P3 <- y$X3
-  P4 <- y$X4
-  P5 <- y$X5
-  
-  res <- #cálculo de la loglikelihood en función de las desviaciones estándar
-    sum(dnorm(z$P1 - P1, sd = devs[1], log = T)) +
-    sum(dnorm(z$P2 - P2, sd = devs[2], log = T)) +
-    sum(dnorm(z$P3 - P3, sd = devs[3], log = T)) +
-    sum(dnorm(z$P4 - P4, sd = devs[4], log = T)) +
-    sum(dnorm(z$P5 - P5, sd = devs[5], log = T)) 
+  res <- 0
+  for(i in c(1:2000)){
+    res <- res +  sum(dnorm( y[,i+1], mean = z[,i+1], sd = devs[i], log = T))
+    }
   }
   return(res)
 }
 
 # Carga datos -------------------------------------------------------------
-
 # Registrations:
-Path = "~/MAD_MODEL/SUR_MODEL/data/Observed_data_2300.data"
-# ob_data <- data.frame(t(read.table(Path, header=FALSE)))
+Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
+down <- data.frame(t(read.table(Path, header=FALSE)))
+colnames(down) <- c("time", "down")
+head(down)
+forcs_mat <- data.matrix(down)
 
-ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_5eq.rds")
-colnames(ob_data) <- c("time", "X1", "X2", "X3", "X4", "X5")
-# head(ob_data)
+# Read Observed data:
+ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
+ob_data <- t(ob_data[,1:2000])
 
-# f_inicio <- as.Date("2021-05-14")
-# f_fin <- as.Date("2021-06-12")
-# 
 # n_inicio <- which(data$FECHA == f_inicio)
 # n_fin <- which(data$FECHA == f_fin)
 
@@ -129,41 +78,18 @@ input2 <- ob_data[n_inicio:n_fin, ]
 # las series independientes.
 
 devs <- c()
-spl <- (input2$X1)
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[1] <- sd(spl - predict(fit)$y)
-
-spl <- input2$X2
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[2] <- sd(spl - predict(fit)$y)
-
-spl <- input2$X3
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[3] <- sd(spl - predict(fit)$y)
-
-spl <- input2$X4
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[4] <- sd(spl - predict(fit)$y)
-
-spl <- input2$X5
-fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
-devs[5] <- sd(spl - predict(fit)$y)
-# Forzamientos ------------------------------------------------------------
-
-# Registrations:
-Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
-down <- data.frame(t(read.table(Path, header=FALSE)))
-colnames(down) <- c("time", "down")
-# head(down)
-
-# Hospitalizados iniciales ------------------------------------------------
+for(i in c(1:1999)){
+  spl <- input2[,i+1]
+  fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
+  devs[i] <- sd(spl - predict(fit)$y)
+}
 
 # A punto de empezar el proceso -------------------------------------------
 
 best <- -999999999 #LL inicial a mejorar
 
 # load("seeds_CAN.RData") #Cargamos seeds de los valores iniciales de los pars.
-seeds <- matrix( runif(30,0,1), ncol = 10, nrow = 3)
+seeds <- matrix( runif(600,0,1), ncol = 200, nrow = 3)
 sols <- NA #Pre-aloco el número de combinaciones paramétricas en 2 unidades de LL de la mejor
 
 set.seed(476468713)
@@ -201,7 +127,7 @@ while(condition){
   
   rm(parall) #Para evitar fugas de memoria
   
-  filename <- paste0("param_MAD_MODEL", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
+  filename <- paste0("~/MAD_MODEL/SUR_MODEL/OUTPUT/NM/param_MAD_MODEL", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
   save(lhs, file = filename)
   
   # Ahora, recuperamos la loglikelihood de cada combinación de parámetros
@@ -222,8 +148,8 @@ while(condition){
   # Seleccionamos las mejores combinaciones de parámetros para mandar una nueva
   # ronda, cogemos las combinaciones que estén a 2 unidades de distancia de la
   # mejor, o en su defecto, las 250 mejores combinaciones.
-  if(sols < 2){
-    index <- order(logl, decreasing = T)[1:2]
+  if(sols < 250){
+    index <- order(logl, decreasing = T)[1:250]
   } else {
     index <- order(logl, decreasing = T)[1:sols]
   }

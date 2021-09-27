@@ -104,14 +104,15 @@ ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", heade
 ob_data <- t(ob_data[,1:2000])
 
 # Pseudo Data to check the oprimization method.
-ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
+# ob_data <- readRDS(file = "~/MAD_MODEL/SUR_MODEL/Code/ode_pseudo_2000eq.rds")
 y <- ob_data
 # Example: plot the likelihood profile of the slope.
 slopevalues <- function(par){
   return(likelihood(ob_data,c(par[1],par[2],gam3, trueSD),forcs_mat))
 } 
 
-mat <- as.matrix(expand.grid(seq(0,1,0.0001), seq(0,1,0.0001)))
+length(seq(0,0.5,0.01))
+mat <- as.matrix(expand.grid(seq(0,0.5,0.01), seq(0,0.5,0.01)))
 slopelikelihoods <- apply(mat,1, slopevalues)
 mat <- as.data.frame(mat)
 mat$LL <- slopelikelihoods
