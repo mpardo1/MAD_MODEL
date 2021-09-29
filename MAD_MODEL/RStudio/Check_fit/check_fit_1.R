@@ -18,10 +18,6 @@ int_sol_2 = data.frame(t(read.table(Path, header=FALSE)))
 # Data of participation.
 # Spain DATA:
 Path_ages = "~/MAD_MODEL/MAD_MODEL/RStudio/Fitting/data/ages_days.csv"
-# Barcelona DATA:
-#Path_ages = "/home/marta/Documentos/SUR Model/Code/RStudio/Fitting/data/ages_days_bcn.csv"
-# Mac PATH
-#Path_ages = "/Users/celsaaraujobarja/Documents/PhD/SUR Model/Code/RStudio/Fitting/data/ages_days.csv"
 ages = read.csv(Path_ages)
 # Convert to data type date the registration time.
 ages$date = as.Date(ages$date,"%Y-%m-%d") 

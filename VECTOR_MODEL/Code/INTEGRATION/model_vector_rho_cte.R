@@ -2,20 +2,11 @@ rm(list = ls())
 library(easypackages)
 libraries("ggplot2","tidyverse","ggstatsplot","deSolve")
 
-# Rho data:
-Path = "~/MAD_MODEL/VECTOR_MODEL/data/df_rho.dat"
-df_rho <- data.frame(t(read.table(Path, header=FALSE)))
-colnames(df_rho) <- c("time", "rho", "date")
-df_rho$date = as.Date(df_rho$date , "%Y-%m-%d")
-df_rho$rho <- as.numeric(df_rho$rho)
-
-min_date <- min(df_rho$date)
-max_date <- max(df_rho$date)
-df_rho$time <- as.numeric(df_rho$date - as.Date(min_date,"%Y-%m-%d") , units="days")
-df_rho$rho[df_rho$date > as.Date("2018-12-01" , "%Y-%m-%d") &
-             df_rho$date < as.Date("2019-04-01" , "%Y-%m-%d")] <- 0
-df_rho$rho[df_rho$date > as.Date("2019-12-01" , "%Y-%m-%d") & 
-             df_rho$date < as.Date("2020-04-01" , "%Y-%m-%d")] <- 0
+#-----------------------------------------------------------------------------#
+###### Rho data #######:
+# Simulation data for participation:
+Path_rho <- "~/MAD_MODEL/SUR_MODEL/Code/rho_sim.rds"
+df_rho <- readRDS(Path_rho)
 
 ggplot(df_rho) + 
   geom_line(aes(x = date, y =rho)) +
@@ -24,143 +15,564 @@ ggplot(df_rho) +
   theme(text = element_text(size=14))
 
 df_date <- df_rho[,c(1,3)]
+min_date_rho <- min(df_date$date)
+max_date_rho <- max(df_date$date)
+
+# Observed data for participation:
+Path_rho_ob <- "~/MAD_MODEL/SUR_MODEL/Code/rho_observed.rds"
+df_rho_ob <- readRDS(Path_rho_ob)
+ggplot(df_rho_ob) + 
+  geom_line(aes(x = date, y =rho)) +
+  ggtitle("Encounter rate computed from Citizen Science model") +
+  theme_bw() +
+  theme(text = element_text(size=14))
+
+df_date_ob <- df_rho_ob[,c(1,3)]
+min_date_rho_ob <- min(df_date_ob$date)
+max_date_rho_ob <- max(df_date_ob$date)
 ###############   ODE INTEGRATION   ##################
-
 Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
-# Path = paste(PC,Path, sep="")
-
 setwd(Path)
 system("R CMD SHLIB model_vec_cte.c")
 dyn.load("model_vec_cte.so")
 
 fec = 100
 K = 250000
-Hum = 13554
-omega_t = 0.2
 delta_L = 0.2
 delta_A = 0.3
 d_L = 0.8
 a = 0.01
+H = 1600000
 
-parms = c(fecun = fec, Ka = K, Hu = Hum, del_L = delta_L, del_A = delta_A, dev_L = d_L, gon = a)
+parms = c(fecun = fec, Ka = K, del_L = delta_L, del_A = delta_A, dev_L = d_L, gon = a, Hum = H)
+# List with the data frames of the forcings:
+# Set the new time to the rho:
+# Data rho simulations:
+ref_date <- min(df_rho$date)
+df_rho$time <- as.numeric(df_rho$date - ref_date) +1
+df_date <- data.frame(time = df_rho$time, date = df_rho$date)
+forcs_mat <-data.matrix(df_rho[,c(1,2)])
 # We set the initial conditions to zero.
 Y <- c(y1 = 100, y2 = 0, y3 = 0)
-min_t <- 1
-max_t <- 100
-times <- seq(min_t,max_t, 1)
-# List with the data frames of the forcings, sort as the c code.
-# df_rho$rho[df_rho$rho == 0 ] <- 0.00000001
-forcs_mat <-data.matrix(df_rho[,1:2])
-
 min_t <- min(df_rho$time)
 max_t <- max(df_rho$time)
 times <- seq(min_t,max_t, 1)
 out <- ode(Y, times, func = "derivs",
-           parms = parms, dllname = "model_vec_cte", method = "ode45",
+           parms = parms, dllname = "model_vec_cte",
            initfunc = "initmod", nout = 1,
            outnames = "Sum", initforc = "forcc",
            forcings = forcs_mat, fcontrol = list(method = "constant")) 
 
-# Event :
-# This is where we define your event function
-# Add this directly above your call to ode()
-posfun <- function(t, y, parms){
-  with(as.list(y), {
-    y[which(y<0)] <- 0  
-    return(y)
-  })
-}
 
-
-out <- ode(Y, times=times, func = "derivs",
-           parms = parms, dllname = "model_vec_cte", method = "ode45",
-           initfunc = "initmod", nout = 1,
-           outnames = "Sum", initforc = "forcc",
-           forcings = forcs_mat, fcontrol = list(method = "constant"),
-           events=list(func = posfun, time = c(0:max_t)))
-
-ode <- data.frame(out) 
-
-ode_df <- merge(ode, df_date, by ="time")
+head(out)
+ode_df <- merge(out, df_date, by ="time")
 ode_df$Sum <- NULL
 head(ode_df)
-colnames(ode_df) <- c("Time", "L", "Ah","A", "date" )
-df_L_A <- ode_df[,c(5,2,3)]
-df_Ah <- ode_df[,c(5,3)]
-df_L <- ode_df[,c(5,2)]
-df_A <- ode_df[,c(5,4)]
-df_plot_1 <- reshape2::melt(df_L_A, id.vars = c("date"))
-df_plot_L <- reshape2::melt(df_L, id.vars = c("date"))
-df_plot_Ah <- reshape2::melt(df_A, id.vars = c("date"))
-df_plot <- reshape2::melt(df_Ah, id.vars = c("date"))
-df_A$
-saveRDS(df_A, file = "~/MAD_MODEL/SUR_MODEL/Code/adults.rds")
+colnames(ode_df) <- c("Time", "L", "A","Ah", "date" )
+saveRDS(ode_df[,c(1:4)], file = "~/MAD_MODEL/SUR_MODEL/Code/adults.rds")
 
 scientific_10 <- function(x) {
   parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
 }
 
-ggplot(df_plot_1,aes(date, value))  +
-  geom_line(aes( colour = variable)) +
+ode_df <- ode_df  %>% filter( ode_df$date  < as.Date("2018-07-01","%Y-%m-%d"))
+
+ggplot(ode_df)  +
+  geom_line(aes( date, L)) +
   ylab("Counts") +
-  ggtitle("Vector dynamics")+
-  scale_color_manual(name = "",
-                     labels = c("Larva", "Adult mosquito"),
-                     values=c('#FF00F6','#FF2C00'))+
+  ggtitle("Larvae dynamics") +
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+
+ggplot(ode_df)  +
+  geom_line(aes( date, A)) +
+  ylab("Counts") +
+  ggtitle("Adult mosquito dynamics") +
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes( date, Ah)) +
+  ylab("Counts") +
+  ggtitle("Handling adult mosquito dynamics") +
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+#------------------------------------------------------------------------------#
+########## WITH PARAMETERS DEPENDING on T ###########
+######---------- Temperatures from Barcelona-------------#####
+Path_temp = "~/MAD_MODEL/VECTOR_MODEL/data/bcn_weather_daily.Rds"
+# Path_temp = paste(PC,Path_temp, sep="")
+
+temp <-read_rds(Path_temp)
+temp$date = as.Date(temp$date , "%Y-%m-%d")
+temp <- temp %>%  group_by(date) %>% summarise(mean_temp = mean(valor))
+min_date_temp <- min(temp$date)
+max_date_temp <- max(temp$date)
+
+ggplot(temp) +
+  geom_line(aes(date, mean_temp))+
+  ggtitle("Mean temperature Barcelona") + 
+  xlab("Mean temperature")+
+  theme_bw()
+
+
+#-------------------------------------------------------------------------------#
+# Functional responses:
+# Gonotrophic cycle (Carlos):
+gonot <- function(T){
+  a = 0.045*T^2-2.617*T+41.105
+  val = min(1,1/a)
+  return(val)
+}
+
+# Development rate
+# d_L <- function(T){
+#   val = 1/(0.14457*T^2 - 8.24857*T + 124.80857)
+#   return(val)
+# }
+
+# # Carlos version:
+# d_L <- function(T){
+#   val = (0.14457*T^2 - 8.24857*T + 124.80857)^(-1)
+#   return(val)
+# }
+
+# Piece-wise version:
+# d_L <- function(T){
+#   if(T > 18 & T < 30){
+#     val = (0.14457*T^2 - 8.24857*T + 124.80857)^(-1)
+#   }else{
+#     val <- 0.001
+#   }
+#   return(val)
+# }
+
+# Paper "How does the dengue vector mosquito..."
+d_L <- function(T){
+  val = 0.1727*exp(-((T-28.4)/12.82)^2)
+  return(val)
+}
+
+# Larva mortality rate
+# # Paper "How does the dengue vector mosquito..."
+# delta_L <- function(T){
+#   a = abs(-0.1305*T^2+3.868*T+30.83)
+#   val = min(1, 1/a)
+#   return(val)
+# }
+
+# # Larva mortality rate
+delta_L <- function(T){
+  val = 0.021643*T^2 - 0.959568*T + 10.440131
+  val = max(0, val)
+  return(val)
+}
+
+# Adult mosquito mortality rate 
+delta_A <- function(T){
+  a = abs(-0.1921*T^2+8.147*T-22.98)
+  val =  min(1, 1/a)
+  return(val)
+}
+
+
+# Larva mortality rate
+#Paper "How does the dengue vector mosquito..."
+# delta_L <- function(T){
+#   a = abs(-0.1921*T^2+8.147*T-22.98)
+#   val = min(1, 1/a)
+#   return(val)
+# }
+#-------------------------------------------------------------------------------#
+######## PLOTS FUNCTIONAL RESPONSES #########
+vec = seq(0,40,1)
+df_gonot_vec <- data.frame(temp = vec, gonot =unlist(lapply(vec,gonot)))
+df_dL_vec <- data.frame(temp = vec, dL = unlist(lapply(vec,d_L)))
+df_deltaL_vec <- data.frame(temp = vec, deltaL = unlist(lapply(vec,delta_L)))
+df_deltaA_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,delta_A)))
+# df_dl_opt_vec <- data.frame(temp = vec, deltaA = unlist(lapply(vec,dL_opt)))
+
+ggplot(df_gonot_vec) + geom_line(aes(temp,gonot)) + 
+  ggtitle("Inverse of the Gonotrophic cycle")+
+  theme_bw()
+
+ggplot(df_dL_vec) + geom_line(aes(temp,dL)) +
+  ggtitle("Larva development rate")+
+  theme_bw()
+
+ggplot(df_deltaL_vec) + geom_line(aes(temp,deltaL)) +
+  ggtitle("Larva mortality rate")+
+  theme_bw()
+
+ggplot(df_deltaA_vec) + geom_line(aes(temp,deltaA)) +
+  ggtitle("Mosquito adult mortality rate")+
+  theme_bw()
+
+ggplot(df_dl_opt_vec) + geom_line(aes(temp,deltaA)) +
+  ggtitle("Mosquito adult mortality rate")+
+  theme_bw()
+#---------------------------------------------------------------------------#
+####### PLOTS FUNCTIONAL RESPONSE TEMP BCN 2018-2021 ######## 
+# Compute the values of the functions/forcings with temp.
+# Compute the minimum date of the rho:
+min_rho_date <- min(df_rho$date)
+min_temp_date <- min(temp$date)
+min_date <-max(min_rho_date, min_temp_date)
+
+max_rho_date <- max(df_rho$date)
+max_temp_date <- max(temp$date)
+max_date <-min(max_rho_date, max_temp_date)
+# DFs with the date and value of the parameter at that time.
+temp <- temp  %>% filter( temp$date >= min_date & temp$date <= max_date)
+df_date <- data.frame(date = temp$date)
+df_date$time = as.numeric(df_date$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
+
+gono = unlist(lapply(temp$mean_temp,gonot))
+df_gonot_out <- data.frame(date = temp$date, gono)
+
+df_gonot_out$time = as.numeric(df_gonot_out$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
+df_gonot_out <- df_gonot_out %>% filter( df_gonot_out$time >= 0)
+
+df_dL_out <- data.frame(date = temp$date, dL = unlist(lapply(temp$mean_temp,d_L)))
+df_dL_out$time = as.numeric(df_dL_out$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
+df_dL_out <- df_dL_out %>% filter( df_dL_out$time >= 0)
+
+df_deltaL_out <- data.frame(date = temp$date, deltaL = unlist(lapply(temp$mean_temp,delta_L)))
+df_deltaL_out$time = as.numeric(df_deltaL_out$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
+df_deltaL_out <- df_deltaL_out %>% filter( df_deltaL_out$time >= 0)
+
+df_deltaA_out <- data.frame(date = temp$date, deltaA = unlist(lapply(temp$mean_temp,delta_A)))
+df_deltaA_out$time = as.numeric(df_deltaA_out$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
+df_deltaA_out <- df_deltaA_out %>% filter( df_deltaA_out$time >= 0)
+
+df_rho$time = as.numeric(df_rho$date - as.Date(min_date,"%Y-%m-%d") , units="days") 
+df_rho <- df_rho %>% filter( df_rho$time >= 0)
+
+ggplot(df_gonot_out) +
+  geom_line(aes(date,gono)) +
+  ggtitle("Gonotrophic cycle")+
+  theme_bw()
+
+ggplot(df_dL_out) +
+  geom_line(aes(date,dL)) +
+  ggtitle("Larva development rate")+
+  theme_bw()
+
+ggplot(df_deltaL_out) +
+  geom_line(aes(date,deltaL)) +
+  ggtitle("Larva mortality rate")+
+  theme_bw()
+
+ggplot(df_deltaA_out) +
+  geom_line(aes(date,deltaA)) +
+  ggtitle("Adult mosquito mortality rate")+
+  theme_bw()
+
+#-----------------------------------------------------------------------------------------#
+############ PREPARE DATA FOR DESOLVE AS FORCINGS #############
+df_gonot_out$date <- NULL
+df_gonot_out <- df_gonot_out[,c(2,1)]
+df_dL_out$date <- NULL
+df_dL_out <- df_dL_out[,c(2,1)]
+df_deltaL_out$date <- NULL
+df_deltaL_out <- df_deltaL_out[,c(2,1)]
+df_deltaA_out$date <- NULL
+df_deltaA_out <- df_deltaA_out[,c(2,1)]
+df_rho$date <- NULL
+df_rho <- df_rho[,c(2,1)]
+#-----------------------------------------------------------------------------------------#
+############# INTEGRATION NON - AUTONOMOUS ##############
+Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
+setwd(Path)
+system("R CMD SHLIB model_vec.c")
+dyn.load("model_vec.so")
+
+f = 200
+K = 250000
+H = 1600000
+# We create a vector with the constant parameters.
+parms = c(f,K,H)
+# We set the initial conditions to cero.
+Y <- c(100,0,0)
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(df_rho),
+                  data.matrix(df_deltaL_out),
+                  data.matrix(df_deltaA_out),
+                  data.matrix(df_dL_out),
+                  data.matrix(df_gonot_out))
+min_t <- min(df_rho$time)
+max_t <- max(df_rho$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_vec",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = forcs_mat, fcontrol = list(method = "constant")) 
+
+ode_out <- data.frame(out) 
+ode_df <- merge(ode_out, df_date, by ="time")
+ode_df$Sum <- NULL
+head(ode_df)
+
+#-------------------------------------------------------------------------------------#
+########## PLOTS RESULTS INTEGRATION ###########
+colnames(ode_df) <- c("Time", "L","A","Ah", "date" )
+df_L_A <- ode_df[,c(5,2,3)]
+df_Ah <- ode_df[,c(5,4)]
+df_L <- ode_df[,c(5,2)]
+df_plot_1 <- reshape2::melt(df_L_A, id.vars = c("date"))
+df_plot_L <- reshape2::melt(df_L, id.vars = c("date"))
+df_plot <- reshape2::melt(df_Ah, id.vars = c("date"))
+
+scientific_10 <- function(x) {
+  parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
+}
+
+# ode_df <- ode_df  %>% filter( ode_df$date  < as.Date("2019-04-01","%Y-%m-%d"))
+ode_df <- ode_df  %>% filter( ode_df$date  > as.Date("2018-05-15","%Y-%m-%d"))
+
+ggplot(ode_df)  +
+  geom_line(aes(date, L)) +
+  ylab("Counts") +
+  ggtitle("Larvae dynamics") +
+  theme_bw() +
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes( date, A)) +
+  ylab("Counts") +
+  ggtitle("Adult mosquito dynamics") +
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10) +
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes(date, Ah)) +
+  ylab("Counts") +
+  ggtitle("Handling mosquitoes dynamics") +
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ode_df$Adults <- ode_df$Ah
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/adults_sim.rds") 
+saveRDS(ode_df, file = filename)
+
+#------------------------------------------------------------------------------------#
+############# INTEGRATION NON - AUTONOMOUS CTE MORTALITIES ##############
+Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
+setwd(Path)
+system("R CMD SHLIB model_vec_cte_mort.c")
+dyn.load("model_vec_cte_mort.so")
+
+f = 200
+K = 250000
+delt_L = 0.2
+delt_A = 0.3
+H = 1600000
+# We create a vector with the constant parameters.
+parms = c(f,K,delt_L,delt_A, H)
+# We set the initial conditions to cero.
+Y <- c(100,0,0)
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(df_rho),
+                  data.matrix(df_dL_out),
+                  data.matrix(df_gonot_out))
+min_t <- min(df_rho$time)
+max_t <- max(df_rho$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_vec_cte_mort",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = forcs_mat, fcontrol = list(method = "constant")) 
+
+ode_out <- data.frame(out) 
+ode_df <- merge(ode_out, df_date, by ="time")
+ode_df$Sum <- NULL
+head(ode_df)
+
+#-------------------------------------------------------------------------------------#
+########## PLOTS RESULTS INTEGRATION  ###########
+colnames(ode_df) <- c("Time", "L", "A","Ah", "date" )
+df_L_A <- ode_df[,c(5,2,3)]
+df_Ah <- ode_df[,c(5,4)]
+df_L <- ode_df[,c(5,2)]
+df_plot_1 <- reshape2::melt(df_L_A, id.vars = c("date"))
+df_plot_L <- reshape2::melt(df_L, id.vars = c("date"))
+df_plot <- reshape2::melt(df_Ah, id.vars = c("date"))
+
+scientific_10 <- function(x) {
+  parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
+}
+
+# ode_df <- ode_df  %>% filter( ode_df$date  < as.Date("2019-04-01","%Y-%m-%d"))
+ode_df <- ode_df  %>% filter( ode_df$date  > as.Date("2018-05-15","%Y-%m-%d"))
+
+ggplot(ode_df)  +
+  geom_line(aes(date, L)) +
+  ylab("Counts") +
+  ggtitle("Larvae dynamics")+
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes( date, A)) +
+  ylab("Counts") +
+  ggtitle("Adult mosquito dynamics")+
+  theme_bw() +
+  # + scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes(date, Ah)) +
+  ylab("Counts") +
+  ggtitle("Handling mosquitoes dynamics") +
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ode_df$Adults <- ode_df$A + ode_df$Ah
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/adults_sim.rds") 
+saveRDS(ode_df, file = filename)
+
+#------------------------------------------------------------------------------------#
+############# INTEGRATION NON - AUTONOMOUS L & A NO Ah ##############
+Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
+setwd(Path)
+system("R CMD SHLIB model_vec_cte_mort.c")
+dyn.load("model_vec_cte_mort.so")
+
+f = 200
+K = 250000
+delt_L = 0.2
+delt_A = 0.3
+# We create a vector with the constant parameters.
+parms = c(f,K,delt_L,delt_A)
+# We set the initial conditions to cero.
+Y <- c(100,0,0)
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(df_rho),
+                  data.matrix(df_dL_out),
+                  data.matrix(df_gonot_out))
+min_t <- min(df_rho$time)
+max_t <- max(df_rho$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_vec_cte_mort",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = forcs_mat, fcontrol = list(method = "constant")) 
+
+ode_out <- data.frame(out) 
+ode_df <- merge(ode_out, df_date, by ="time")
+ode_df$Sum <- NULL
+head(ode_df)
+
+#-------------------------------------------------------------------------------------#
+########## PLOTS RESULTS INTEGRATION  ###########
+colnames(ode_df) <- c("Time", "L", "Ah","A", "date" )
+df_L_A <- ode_df[,c(5,2,3)]
+df_Ah <- ode_df[,c(5,4)]
+df_L <- ode_df[,c(5,2)]
+df_plot_1 <- reshape2::melt(df_L_A, id.vars = c("date"))
+df_plot_L <- reshape2::melt(df_L, id.vars = c("date"))
+df_plot <- reshape2::melt(df_Ah, id.vars = c("date"))
+
+scientific_10 <- function(x) {
+  parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
+}
+
+# ode_df <- ode_df  %>% filter( ode_df$date  < as.Date("2019-04-01","%Y-%m-%d"))
+ode_df <- ode_df  %>% filter( ode_df$date  > as.Date("2018-05-15","%Y-%m-%d"))
+
+ggplot(ode_df)  +
+  geom_line(aes(date, L)) +
+  ylab("Counts") +
+  ggtitle("Larvae dynamics")+
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes( date, A)) +
+  ylab("Counts") +
+  ggtitle("Adult mosquito dynamics")+
   theme_bw() + scale_y_continuous(labels = scientific_10)+
   theme(text = element_text(size=18))
 
-ggplot(df_L)  +
-  geom_line(aes(date, L), color = "dark green") +
+ggplot(ode_df)  +
+  geom_line(aes(date, Ah)) +
   ylab("Counts") +
-  ggtitle("Larvae dynamics") +
-  scale_color_manual(values=c('#FF00F6')) +
-  theme_bw()+
-  theme(text = element_text(size=16))
+  ggtitle("Handling mosquitoes dynamics") +
+  theme_bw() + scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
 
-ggplot(df_A)  +
-  geom_line(aes(date, A), color = "dark green") +
-  ylab("Counts") +
-  ggtitle("Adult mosquito dynamics") +
-  scale_color_manual(values=c('#FF2C00')) +
-  theme_bw()+
-  theme(text = element_text(size=16))
-
-
-ggplot(df_Ah)  +
-  geom_line(aes(date, Ah), color = "dark green") +
-  ylab("Counts") +
-  ggtitle("Handling Adult mosquito dynamics") +
-  theme_bw()+
-  theme(text = element_text(size=16)) +
-  scale_color_manual(values=c('#f0ff33')) 
-###### Equilibrium points ######
-
-eq_point<- function(a,f,dL,deltaA,deltaL,chi,H,K){
-  A_h <- K*((chi*H*dL/((a+deltaA)*(chi*H+deltaA)))-(1/(a*f))*(dL+deltaL))
-  L <- (a*f*A_h)/(((a*f*A_h)/K)+(dL+deltaL))
-  A <- (dL*K/(chi*H+deltaA))*L
-  return(c(L,A_h,A))
+ode_df$Adults <- ode_df$A + ode_df$Ah
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/adults_sim.rds") 
+saveRDS(ode_df, file = filename)
+#------------------------------------------------------------------------------------#
+###### FEASABILITY CONDITION #########
+feasability_cond <- function(omeg){
+  val <- (gon*fec*omeg*dev_L)/((gon + del_A)*(omeg + del_A)*(dev_L + del_L))^(1/3)
+  return(val)
 }
 
-gono_vec <- df_gonot_out$gono
-dL_vec <- df_dL_out$dL
-deltaL_vec <- df_deltaL_out$deltaL
-deltaA_vec <- df_deltaA_out$deltaA
-
-chi <- 0.0114512
-
-eq_out <- mapply(eq_point, gono_vec,f,dL_vec,deltaA_vec,deltaL_vec,chi,H,K)
-
-eq_df <- data.frame(time = df_date$date, t(eq_out))
-colnames(eq_df) <- c("time","L","A_h","A")
-eq_df <- reshape2::melt(eq_df, id.vars = c("time"))
-
-ggplot(eq_df,aes(time, value))  +
-  geom_line(aes( colour = variable)) +
-  ylab("Number of individuals") +
-  ggtitle("Equilibrium point")+
-  scale_color_manual(name = "",
-                     labels = c("Larva", "Handling adult mosquito", "Adult mosquito"),
-                     values=c('#FF00F6','#FF2C00', '#FF2C00')) +
+fec = 200
+K = 250000
+Hum = 1600000
+omega_t = 0.2
+del_L = 0.2
+del_A = 0.8
+dev_L = 0.8
+gon = 1/10
+vec <- seq(0,0.000001,0.000000001)*Hum
+vec_omega <- unlist(lapply(vec, feasability_cond))
+df_omeg <- data.frame(x = vec, omeg =vec_omega)
+ggplot(df_omeg)+
+  geom_rect(ymin = 1, ymax = Inf, xmin = -Inf, xmax = Inf, fill = 'firebrick3') +
+  geom_rect(ymin = -Inf, ymax = 1, xmin = -Inf, xmax = Inf, fill = 'chartreuse3') +
+  
+  geom_hline(yintercept=1, linetype="dashed", color = "red")+
+  xlab(expression(paste("Number of human mosquito encounters ","(",chi,"H)"))) +
+  ylab(expression(R[0]))+
+  geom_line(aes(x, omeg))+
   theme_bw()
+########## PLOT ALL VARIABLES TOGUETHER #########
+# df_plot <- ode_df[,c(5,2,4)]
+# df_plot <- reshape2::melt(df_plot, id.vars = c("date"))
+# ggplot(df_plot,aes(date, value)) +
+#   geom_line(aes( colour = variable))  +
+#   scale_x_date(date_breaks = "10 month",
+#                date_labels = "%b %y")  +
+#   ylab("Counts") + ggtitle("Participation dynamics") +
+#   scale_color_manual(name = "",
+#                      labels = c("Larvae","Adult mosquito"),
+#                      values=c('#FF00F6','#FF2C00'))+
+#   theme(text = element_text(size=16)) +
+#   theme_bw() 
+#-------------------------------------------------------------------------------------#
+#----------------------AVOID VALUES GOING TO ZERO----------------------------#
+# Event :
+# This is where we define your event function
+# Add this directly above your call to ode()
+# posfun <- function(t, y, parms){
+#   with(as.list(y), {
+#     y[which(y<0)] <- 0  
+#     return(y)
+#   })
+# }
+# 
+# 
+# out <- ode(Y, times=times, func = "derivs",
+#            parms = parms, dllname = "model_vec_cte", method = "ode45",
+#            initfunc = "initmod", nout = 1,
+#            outnames = "Sum", initforc = "forcc",
+#            forcings = forcs_mat, fcontrol = list(method = "constant"),
+#            events=list(func = posfun, time = c(0:max_t)))

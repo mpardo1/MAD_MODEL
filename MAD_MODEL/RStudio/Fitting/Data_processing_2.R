@@ -30,18 +30,18 @@ library(magrittr)
 
 # UPLOAD FILES ####
 # Data of participation.
-Path_ages = "/home/marta/Documentos/SUR Model/Code/RStudio/Fitting/data/ages_days.csv"
+Path_ages = "~/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/ages_days.csv"
 ages = read.csv(Path_ages)
 # Convert to data type date the registration time.
 ages$date = as.Date(ages$date,"%Y-%m-%d") 
 length_reg = length(ages$date)
 
 # Data with registration date with hour and minute and registration ID.
-Path_users = "/home/marta/Documentos/SUR Model/Code/RStudio/Fitting/data/register_data_tigausers.csv"
+Path_users = "~/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/register_data_tigausers.csv"
 registration = read.csv(Path_users)
 
 # Downloads .data : Downloads_Transposed_2378
-Path_down = "/home/marta/Documentos/SUR Model/Code/RStudio/Fitting/data/Downloads_Transposed_2378.data"
+Path_down = "~/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/Downloads_Transposed_2378.data"
 down_process = t(read.table(Path_down))
 l_down = max(down_process[,1])
 down_process_full = matrix(0, l_down, 2)
@@ -76,6 +76,7 @@ write.table(reg_group_sort_1, "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPO
 # Remove all data frames.
 remove(reg_group)
 remove(registration)
+#-----------------------------------------------------------------------------------#
 
 ##############-----------------------PROCESS .DAT-----------------------###########
 # Create a matrix with the participant data in each row each age group dynamics.
@@ -96,6 +97,17 @@ for(i in c(1:dim_l)){
   print(paste0("Index",i))
   mat_ages[merge_dt$age_days[i],merge_dt$time[i]]=merge_dt$N[i]
 }
+
+mat_ages <- t(mat_ages)
+ob_data <- as.data.frame(mat_ages)
+ob_data <- cbind(time = seq(0,length(ob_data$V1)-1), ob_data)
+df_date <- data.frame(time = 0, date = unique(merge_df$date))
+min_date <- min(df_date$date)
+df_date$time <- as.numeric(df_date$date - min_date)
+ob_data <- merge(df_date, ob_data,by="time")
+Path = "~/MAD_MODEL/MAD_MODEL/data/Ob_data.rds"
+saveRDS(ob_data,Path)
+#-----------------------------------------------------------------------------------#
 sum <- array(0,dim)
 for(i in c(1:dim)){
   sum[i] = sum(mat_ages[i,])

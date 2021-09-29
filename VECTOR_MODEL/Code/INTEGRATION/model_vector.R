@@ -59,36 +59,6 @@ gonot <- function(T){
   return(val)
 }
 
-
-
-# ######### DEVELOPMENT RATE#########
-# temp_vec = c(15,20,25,30,35)
-# dur_gono = c(35,14.4,10.4,8.8,12.3)
-# temp_vec2 <- temp_vec^2
-# quadratic_mod <- lm(dur_gono ~ temp_vec + temp_vec2)
-# temp_val <- seq(0,40,1)
-# predict_gono <- predict(quadratic_mod, list(temp_vec=temp_val, temp_vec2<- temp_val^2))
-# df_gono_data <- data.frame(temp_vec, dur_gono)
-# df_predict <- data.frame(temp_val, predict_gono)
-# 
-# ggplot(df_predict, aes(temp_val, predict_gono)) +
-#   geom_line()+
-#   geom_point(data = df_gono_data, aes(x = temp_vec, y =dur_gono))
-# 
-# int = quadratic_mod$coefficients[1]
-# beta = quadratic_mod$coefficients[2]
-# beta2 = quadratic_mod$coefficients[3]
-# int
-# beta
-# beta2
-# # Gonotrophic cycle
-# dL_opt <- function(T){
-#   a = beta2*T^2+beta*T+int
-#   val = min(1,1/a)
-#   return(val)
-# }
-# ####-----------------------------#
-
 # Development rate
 d_L <- function(T){
   val = 1/(0.14457*T^2 - 8.24857*T + 124.80857)
