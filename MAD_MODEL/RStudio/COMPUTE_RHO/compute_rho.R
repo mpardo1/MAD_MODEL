@@ -9,8 +9,6 @@ libraries("gdata", "ggExtra","ggplot2", "numbers","tidyverse","data.table","mult
 # to end_date.
 # 4. Compute Rho and plot it.
 
-
-
 ##### UPLOAD REGISTRATION FILE ###### STEP 1
 # Data with registration for BCN taken from age distribution time series, filter by age 0.
 Path_reg = "~/MAD_MODEL/MAD_MODEL/data/ages_days_bcn.csv"

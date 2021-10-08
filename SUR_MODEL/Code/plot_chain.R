@@ -13,7 +13,7 @@ true2 = gam2
 true3 = gam3
 trueSD = 1
 # Easy plots:
-output <- load("~/Documentos/PHD/2021/SUR_Model/OUTPUT/chain_sum_2000eq_3param_20000_2021-09-23.RData")
+output <- load("~/Documentos/PHD/2021/SUR_Model/OUTPUT/chain_var_0_0008_sum_2000eq_3param_15000_2021-09-27.RData")
 # Ubuntu:
 # output <- load("~/Documentos/PHD/2021/SUR_Model/RESULTS_ESTIMATION/MH/chain_MH_op_100eq_3param50000.RData")
 

@@ -27,8 +27,10 @@ ggplot(df_rho_ob) +
   theme_bw() +
   theme(text = element_text(size=14))
 
+min_date_rho_ob <- min(df_rho_ob$date)
+df_rho_ob$time <- as.numeric(df_rho_ob$date - min_date_rho_ob)
 df_date_ob <- df_rho_ob[,c(1,3)]
-min_date_rho_ob <- min(df_date_ob$date)
+
 max_date_rho_ob <- max(df_date_ob$date)
 ###############   ODE INTEGRATION   ##################
 Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
@@ -49,7 +51,7 @@ parms = c(fecun = fec, Ka = K, del_L = delta_L, del_A = delta_A, dev_L = d_L, go
 # Set the new time to the rho:
 # Data rho simulations:
 ref_date <- min(df_rho$date)
-df_rho$time <- as.numeric(df_rho$date - ref_date) +1
+df_rho$time <- as.numeric(df_rho$date - ref_date) + 1
 df_date <- data.frame(time = df_rho$time, date = df_rho$date)
 forcs_mat <-data.matrix(df_rho[,c(1,2)])
 # We set the initial conditions to zero.
@@ -296,7 +298,7 @@ f = 200
 K = 250000
 H = 1600000
 # We create a vector with the constant parameters.
-parms = c(f,K,H)
+parms = c(fecun = f,Ka = K,Hum = H)
 # We set the initial conditions to cero.
 Y <- c(100,0,0)
 # List with the data frames of the forcings, sort as the c code.
@@ -518,6 +520,83 @@ ode_df$Adults <- ode_df$A + ode_df$Ah
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/adults_sim.rds") 
 saveRDS(ode_df, file = filename)
 #------------------------------------------------------------------------------------#
+############# INTEGRATION rho CTE ##############
+Path = "~/MAD_MODEL/VECTOR_MODEL/Code/PARAM_ESTIMA/"
+setwd(Path)
+system("R CMD SHLIB model_rho_cte.c")
+dyn.load("model_rho_cte.so")
+
+f = 200
+K = 250000
+H = 1600000
+rho = 0.01
+# We create a vector with the constant parameters.
+parms = c(fecun = f, Ka = K, Hum = H, rho = rho)
+# We set the initial conditions to cero.
+Y <- c(100,0,0)
+# List with the data frames of the forcings, sort as the c code.
+forcs_mat <- list(data.matrix(df_deltaL_out),
+                  data.matrix(df_deltaA_out),
+                  data.matrix(df_dL_out),
+                  data.matrix(df_gonot_out))
+min_t <- min(df_rho$time)
+max_t <- max(df_rho$time)
+times <- seq(min_t,max_t, 1)
+out <- ode(Y, times, func = "derivs",
+           parms = parms, dllname = "model_rho_cte",
+           initfunc = "initmod", nout = 1,
+           outnames = "Sum", initforc = "forcc",
+           forcings = forcs_mat, fcontrol = list(method = "constant")) 
+
+ode_out <- data.frame(out) 
+ode_df <- merge(ode_out, df_date, by ="time")
+ode_df$Sum <- NULL
+head(ode_df)
+
+#-------------------------------------------------------------------------------------#
+########## PLOTS RESULTS INTEGRATION  ###########
+colnames(ode_df) <- c("Time", "L", "A","Ah", "date" )
+df_L_A <- ode_df[,c(5,2,3)]
+df_Ah <- ode_df[,c(5,4)]
+df_L <- ode_df[,c(5,2)]
+df_plot_1 <- reshape2::melt(df_L_A, id.vars = c("date"))
+df_plot_L <- reshape2::melt(df_L, id.vars = c("date"))
+df_plot <- reshape2::melt(df_Ah, id.vars = c("date"))
+
+scientific_10 <- function(x) {
+  parse(text=gsub("e", " %*% 10^", scales::scientific_format()(x)))
+}
+
+# ode_df <- ode_df  %>% filter( ode_df$date  < as.Date("2019-04-01","%Y-%m-%d"))
+ode_df <- ode_df  %>% filter( ode_df$date  > as.Date("2018-05-15","%Y-%m-%d"))
+
+ggplot(ode_df)  +
+  geom_line(aes(date, L)) +
+  ylab("Counts") +
+  ggtitle("Larvae dynamics")+
+  theme_bw() +
+  # scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes( date, A)) +
+  ylab("Counts") +
+  ggtitle("Adult mosquito dynamics")+
+  theme_bw() + scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ggplot(ode_df)  +
+  geom_line(aes(date, Ah)) +
+  ylab("Counts") +
+  ggtitle("Handling mosquitoes dynamics") +
+  theme_bw() + scale_y_continuous(labels = scientific_10)+
+  theme(text = element_text(size=18))
+
+ode_df$Adults <- ode_df$A + ode_df$Ah
+filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/adults_sim.rds") 
+saveRDS(ode_df, file = filename)
+#------------------------------------------------------------------------------------#
+
 ###### FEASABILITY CONDITION #########
 feasability_cond <- function(omeg){
   val <- (gon*fec*omeg*dev_L)/((gon + del_A)*(omeg + del_A)*(dev_L + del_L))^(1/3)
@@ -544,6 +623,8 @@ ggplot(df_omeg)+
   ylab(expression(R[0]))+
   geom_line(aes(x, omeg))+
   theme_bw()
+
+
 ########## PLOT ALL VARIABLES TOGUETHER #########
 # df_plot <- ode_df[,c(5,2,4)]
 # df_plot <- reshape2::melt(df_plot, id.vars = c("date"))
