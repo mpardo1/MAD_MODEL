@@ -8,8 +8,17 @@ libraries("ggplot2","tidyverse","ggstatsplot","deSolve")
 Path_rho <- "~/MAD_MODEL/SUR_MODEL/Code/rho_sim.rds"
 df_rho <- readRDS(Path_rho)
 
+
 ggplot(df_rho) + 
   geom_line(aes(x = date, y =rho)) +
+  ggtitle("Encounter rate computed from Citizen Science model") +
+  theme_bw() +
+  theme(text = element_text(size=14))
+
+H <- 1600000
+df_rho$rho_H <- df_rho$rho*H
+ggplot(df_rho) + 
+  geom_line(aes(x = date, y =rho_H)) +
   ggtitle("Encounter rate computed from Citizen Science model") +
   theme_bw() +
   theme(text = element_text(size=14))
