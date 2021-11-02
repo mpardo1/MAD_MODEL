@@ -1,0 +1,21 @@
+rm(list = ls())
+library(gdata) 
+library(segmented)
+library(e1071)
+library(ggplot2)
+library("readxl")
+library(tidyverse)
+library(lubridate)
+
+Path = "Documentos/R/Dades web+app.xlsx"
+download_data <- read_excel(Path )
+norm_daily_downloads = download_data$`Current Device Installs`/max(download_data$`Current Device Installs`)
+plot(download_data$Date,download_data$`Current Device Installs`,xlab="Date", ylab="Number of downloads")
+data_2014_2017 = download_data %>% filter( year(download_data$Date) < 2017)
+data_2017_now = download_data %>% filter( year(download_data$Date) > 2017)
+plot(data_2014_2017$Date,data_2014_2017$`Current Device Installs`,xlab="Date", ylab="Number of downloads")
+plot(data_2017_now$Date,data_2017_now$`Current Device Installs`,xlab="Date", ylab="Number of downloads")
+
+plot(download_data$Date,download_data$norm_daily_downloads,xlab="Date", ylab="Percentage of downloads")
+plot(data_2014_2017$Date,data_2014_2017$norm_daily_downloads,xlab="Date", ylab="Percentage of downloads")
+plot(data_2017_now$Date,data_2017_now$norm_daily_downloads,xlab="Date", ylab="Percentage of downloads")
