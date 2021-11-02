@@ -22,3 +22,6 @@ df_prop <- read_csv(Path_prop)
 Path_age = "/Users/celsaaraujobarja/MAD_MODEL/DATA_PROCESS/Data/ages_days_bcn.csv"
 df_age_bcn <- read_csv(Path_age)
 
+
+Path_life_t <- "/Users/celsaaraujobarja/MAD_MODEL/DATA_PROCESS/Data/participation_life_table.csv"
+df_lt <- read_csv(Path_life_t)
