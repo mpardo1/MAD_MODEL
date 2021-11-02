@@ -5,7 +5,7 @@ library(e1071)
 library(ggplot2)
 library(optimx)
 library(zoom)
-
+fqfqw
 # Read data from de csv and save it on life_table:
 life_table = read.csv("Documentos/R/data/participation_life_table.csv") 
 
