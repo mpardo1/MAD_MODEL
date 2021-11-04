@@ -1,6 +1,6 @@
 rm(list = ls())
 # MAD model:
-output <- load("~/MAD_MODEL/SUR_MODEL/Code/param_MAD_MODEL1.RData")
+output <- load("/home/marta/Documentos/PHD/2021/SUR_Model/OUTPUT/param_MAD_MODEL1.RData")
 out_mat <- matrix(0, nrow = 10, ncol = 4)
 for(i in c(1:10)){
   out_mat[i,1] = lhs[[i]]$value

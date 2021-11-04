@@ -4,7 +4,7 @@ library("tidyverse")
 library("deSolve")
 
 # Load C code:
-Path = "~/MAD_MODEL/SUR_MODEL/Code/"
+Path = "~/MAD_MODEL/SUR_MODEL/Code/PARAM_ESTIMATION/MH/"
 setwd(Path)
 system("R CMD SHLIB model_2000eq.c")
 dyn.load("model_2000eq.so")
@@ -44,7 +44,7 @@ ll_ode <- function(x, # vector con los parámetros
   z <- z[-1, ]
   
   res <- 0
-  for(i in c(1:2000)){
+  for(i in c(1:1999)){
     res <- res +  sum(dnorm( y[,i+1], mean = z[,i+1], sd = devs[i], log = T))
     }
   }
@@ -60,7 +60,7 @@ head(down)
 forcs_mat <- data.matrix(down)
 
 # Read Observed data:
-ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/Code/Observed_data_2300.data", header=FALSE, sep= " ")
+ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/data/Observed_data_2300.data", header=FALSE, sep= " ")
 ob_data <- t(ob_data[,1:2000])
 
 # n_inicio <- which(data$FECHA == f_inicio)
@@ -80,8 +80,11 @@ input2 <- ob_data[n_inicio:n_fin, ]
 devs <- c()
 for(i in c(1:1999)){
   spl <- input2[,i+1]
-  fit <- smooth.spline(x = 1:nrow(input2), y = spl, df = 4)
+  fit <- smooth.spline(x = 1:length(spl), y = spl, df = 4)
   devs[i] <- sd(spl - predict(fit)$y)
+  if(devs[i] == 0){
+    devs[i] <- 0.001
+  }
 }
 
 # A punto de empezar el proceso -------------------------------------------
