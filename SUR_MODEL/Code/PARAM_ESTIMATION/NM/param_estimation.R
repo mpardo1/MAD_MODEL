@@ -132,7 +132,7 @@ while(condition){
   
   rm(parall) #Para evitar fugas de memoria
   
-  filename <- paste0("~/MAD_MODEL/SUR_MODEL/OUTPUT/NM/param_MAD_MODEL", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
+  filename <- paste0("~/MAD_MODEL/SUR_MODEL/OUTPUT/NM/param_MAD_MODEL_1core", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
   save(lhs, file = filename)
   
   # Ahora, recuperamos la loglikelihood de cada combinación de parámetros
