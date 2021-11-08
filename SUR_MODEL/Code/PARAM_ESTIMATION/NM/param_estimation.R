@@ -92,7 +92,7 @@ for(i in c(1:1999)){
 best <- -999999999 #LL inicial a mejorar
 
 # load("seeds_CAN.RData") #Cargamos seeds de los valores iniciales de los pars.
-seeds <- matrix( runif(600,0,1), ncol = 200, nrow = 3)
+seeds <- matrix( runif(900,0,1), ncol = 300, nrow = 3)
 sols <- NA #Pre-aloco el número de combinaciones paramétricas en 2 unidades de LL de la mejor
 
 set.seed(476468713)
@@ -132,7 +132,7 @@ while(condition){
   
   rm(parall) #Para evitar fugas de memoria
   
-  filename <- paste0("~/MAD_MODEL/SUR_MODEL/OUTPUT/NM/param_MAD_MODEL_1core", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
+  filename <- paste0("~/MAD_MODEL/SUR_MODEL/OUTPUT/NM/param_MAD_MODEL_1core_900it", round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
   save(lhs, file = filename)
   
   # Ahora, recuperamos la loglikelihood de cada combinación de parámetros
