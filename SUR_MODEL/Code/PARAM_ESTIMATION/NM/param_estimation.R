@@ -108,10 +108,11 @@ round <- 1
 # sims <- 2 #Número de combinaciones paramétricas a explorar
 sims <- ncol(seeds) #Número de combinaciones paramétricas a explorar
 
-Cores <- 20
+Cores <- 1
 # Cores <- parallel::detectCores()#Numero de cores a utilizar.
 it <- 0
 while(condition){
+  print(paste0("Iteration: ", it))
   #Ahora viene la paralelización
   parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
     it <- it + 1
