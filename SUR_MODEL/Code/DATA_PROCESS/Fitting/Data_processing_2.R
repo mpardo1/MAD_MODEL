@@ -1,112 +1,97 @@
 # DATA PROCESSING####
 rm(list = ls())
-library(gdata) 
-library(segmented)
-library(e1071)
 library(ggplot2)
-library(optimx)
-library(zoom)
-library(mlr3misc)
 library(numbers)
 library(tidyverse)
-library(SparkR)
 library(deSolve)
-library(coda)
-library(rootSolve)
-library(FME)
-library(data.table)
-library(multiplex)
-library(gganimate)
-library(ggflags)
-library(gifski)
-library(multiplex)
-library(png)
-library(caTools)
-library(plotly)
-library(gapminder)
-library(purrr)
-library(magick)
-library(magrittr)
 
 # UPLOAD FILES ####
 # Data of participation.
-Path_ages = "~/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/ages_days.csv"
+Path_ages = "~/MAD_MODEL/SUR_MODEL/data/ages_days.csv"
 ages = read.csv(Path_ages)
 # Convert to data type date the registration time.
 ages$date = as.Date(ages$date,"%Y-%m-%d") 
 length_reg = length(ages$date)
 
-# Data with registration date with hour and minute and registration ID.
-Path_users = "~/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/register_data_tigausers.csv"
-registration = read.csv(Path_users)
-
-# Downloads .data : Downloads_Transposed_2378
-Path_down = "~/Documentos/PHD/2021/SUR_Model/Code/RStudio/Fitting/data/Downloads_Transposed_2378.data"
-down_process = t(read.table(Path_down))
-l_down = max(down_process[,1])
-down_process_full = matrix(0, l_down, 2)
-down_process_full[,1]
-for(i in c(1:l_down)){
-  down_process_full[i,1]
-}
+# REGSITRATION DATA ###
+registration <- read.csv(Path_ages)
+registration <- registration %>% filter( registration$age_days == 0)
 # Convert to data type date the registration time.
-registration$date_reg = as.Date(registration$registration_time,'%Y-%m-%d %H:%M:%S') 
-registration$boolean = 1
-# Do a group by by the day of registration.
-reg_group <- registration %>%  group_by(date_reg) %>% summarise(mean = mean(boolean), sum = sum(boolean), n = n())
-reg_group_sort <- reg_group[order(reg_group$date_reg),]
-# Erase the dummy columns.
-reg_group_sort$mean <- NULL
-reg_group_sort$sum <- NULL
-reg_group_sort$diff <- NULL
-len = length(reg_group_sort$n)-1
-reg_group_sort$time = 0
-for(i in c(1:len)){
-  diff  = reg_group_sort$date_reg[i+1] - reg_group_sort$date_reg[i] 
-  reg_group_sort$time[i+1] = reg_group_sort$time[i] + diff
-  print(paste0("Date difference:",diff))
-  print(paste0("Time i+1:",reg_group_sort$time[i+1]))
+registration$date <- as.Date(registration$date,'%Y-%m-%d') 
+min_date <- min(registration$date)
+max_date <- max(registration$date)
+df_data <- data.frame(date = seq(min_date, max_date, "days"))
+reg_df <- merge(df_data,registration, by="date", all = TRUE)
+reg_df[is.na(reg_df)] <- 0
+reg_df$age_days <- NULL
+for(i in c(1:(length(registration$date)-1))){
+  a <- as.numeric(registration$date[i+1] - registration$date[i])
+  if(a > 1){
+    print(paste0("diff date", registration$date[i]))
+  }
 }
-reg_group_sort$date_reg <- NULL
-reg_group_sort <- t(reg_group_sort)
-reg_group_sort_1 <- matrix(0,2,len+1)
-reg_group_sort_1[1,] = reg_group_sort[2,]
-reg_group_sort_1[2,] = reg_group_sort[1,]
-write.table(reg_group_sort_1, "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION/Downloads_2353_test.dat",sep="\t",col.names = FALSE,row.names = FALSE)
-# Remove all data frames.
-remove(reg_group)
-remove(registration)
-#-----------------------------------------------------------------------------------#
 
-##############-----------------------PROCESS .DAT-----------------------###########
-# Create a matrix with the participant data in each row each age group dynamics.
-ages_ord <- ages[with(ages, order(date, age_days)), ]
-# Insert missing age_groups per date. 
-# First create a column with time from 1 to end.
-vec_uni = unique(ages_ord$date)
-l_uni = length(vec_uni)-1
-date_uni = data.frame(date = vec_uni, time =c(0:l_uni))
-# Join the two data frames.
-merge_df <- merge(ages_ord,date_uni, by="date")
-dim_df = length(ages$date)
-merge_dt <- data.table(merge_df)
-dim = max(merge_dt$time)
+
+reg_df$time <- as.numeric(reg_df$date - min_date)
+registration_df <- t(as.matrix(data.frame( time = reg_df$time, reg_df$N)))
+Path <- paste0( "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION/Downloads_", Sys.Date() ,"_", max(reg_df$time),".dat")
+write.table(registration_df, Path,sep="\t",col.names = FALSE,row.names = FALSE)
+#-----------------------------------------------------------------------------------#
+## Create the matrix with observed data, each row one group class each column each time.
+min_date <- min(ages$date)
+ages$time <- as.numeric(ages$date - min_date)
+dim <- max(ages$time) + 1
 mat_ages <- matrix(0, dim, dim)
-dim_l = length(merge_dt$date)
-for(i in c(1:dim_l)){
-  print(paste0("Index",i))
-  mat_ages[merge_dt$age_days[i],merge_dt$time[i]]=merge_dt$N[i]
+d <- nrow(ages)
+for(i in c(1:d)){
+  mat_ages[ages$age_days[i],ages$time[i]]=ages$N[i]
 }
+mat_ages <- rbind(seq(1,ncol(mat_ages),1),mat_ages)
+mat_ages <- cbind(replicate(nrow(mat_ages), 0), mat_ages)
+# Save matrix to do the estimation parameter problem in C:
+Path <- paste0( "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION/Observed_", Sys.Date() ,"_", ncol(mat_ages),".dat")
+write.table(mat_ages, Path,sep="\t",col.names = FALSE,row.names = FALSE)
+
+# Create a data frame with the observed data with the time and date:
+mat_ages <- t(mat_ages)
+min_date <- min(ages$date) - 1
+max_date <- max(ages$date)
+ob_data <- as.data.frame(mat_ages)
+date <- seq(min_date,max_date,"days")
+ob_data <- cbind(date, ob_data)
+
+Path = "~/MAD_MODEL/SUR_MODEL/data/Ob_data.rds"
+saveRDS(ob_data,Path)
+
+#------------------------------------------------------------------------------------#
+#### Observed data for Barcelona #####
+Path_ages = "~/MAD_MODEL/SUR_MODEL/data/ages_days_bcn.csv"
+ages = read.csv(Path_ages)
+# Convert to data type date the registration time.
+ages$date = as.Date(ages$date,"%Y-%m-%d") 
+length_reg = length(ages$date)
+## Create the matrix with observed data, each row one group class each column each time.
+min_date <- min(ages$date)
+ages$time <- as.numeric(ages$date - min_date)
+dim <- max(ages$time) + 1
+mat_ages <- matrix(0, dim, dim)
+d <- nrow(ages)
+for(i in c(1:d)){
+  mat_ages[ages$age_days[i],ages$time[i]]=ages$N[i]
+}
+mat_ages <- rbind(seq(1,ncol(mat_ages),1),mat_ages)
+mat_ages <- cbind(replicate(nrow(mat_ages), 0), mat_ages)
 
 mat_ages <- t(mat_ages)
+min_date <- min(ages$date) - 1
+max_date <- max(ages$date)
 ob_data <- as.data.frame(mat_ages)
-ob_data <- cbind(time = seq(0,length(ob_data$V1)-1), ob_data)
-df_date <- data.frame(time = 0, date = unique(merge_df$date))
-min_date <- min(df_date$date)
-df_date$time <- as.numeric(df_date$date - min_date)
-ob_data <- merge(df_date, ob_data,by="time")
-Path = "~/MAD_MODEL/MAD_MODEL/data/Ob_data.rds"
+date <- seq(min_date,max_date,"days")
+ob_data <- cbind(date, ob_data)
+
+Path = "~/MAD_MODEL/SUR_MODEL/data/Ob_data_bcn.rds"
 saveRDS(ob_data,Path)
+
 #-----------------------------------------------------------------------------------#
 sum <- array(0,dim)
 for(i in c(1:dim)){

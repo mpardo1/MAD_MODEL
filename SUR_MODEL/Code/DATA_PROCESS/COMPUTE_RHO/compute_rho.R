@@ -1,6 +1,11 @@
 rm(list = ls())
 library(easypackages)
-libraries("gdata", "ggExtra","ggplot2", "numbers","tidyverse","data.table","multiplex","reshape","viridis","stats","ggpubr","ggstatsplot","e1071","mlr3misc","deSolve", "gganimate") 
+libraries("gdata", "ggExtra","ggplot2",
+          "numbers","tidyverse","data.table",
+          "multiplex","reshape","viridis",
+          "stats","ggpubr","ggstatsplot",
+          "e1071","mlr3misc","deSolve", 
+          "gganimate") 
 
 # STEPS to compute RHO(M).
 # 1. Process the data to obtain A(t), registration temporal series, to do the simulations in C.
@@ -11,7 +16,7 @@ libraries("gdata", "ggExtra","ggplot2", "numbers","tidyverse","data.table","mult
 
 ##### UPLOAD REGISTRATION FILE ###### STEP 1
 # Data with registration for BCN taken from age distribution time series, filter by age 0.
-Path_reg = "~/MAD_MODEL/MAD_MODEL/data/ages_days_bcn.csv"
+Path_reg = "~/MAD_MODEL/SUR_MODEL/data/ages_days_bcn.csv"
 registration = read.csv(Path_reg)
 registration <- registration %>% filter( registration$age_days == 0)
 registration$date <- as.Date(registration$date,'%Y-%m-%d') 
@@ -59,15 +64,17 @@ df_aux <- merge(df_aux, registration, by = "time")
 df_plot <- reshape2::melt(df_aux, id.vars = c("time"))
 
 #---------------------------------------------------------------------------#
-########## PLOTS PARTICIPATION ###########
-# Checking the sumation of the different age groups. 
+######### PLOTS PARTICIPATION ###########
+# Checking the sumation of the different age groups.
+Path_prop <- "~/MAD_MODEL/SUR_MODEL/data/propensity_predictions.csv"
+prop_mat  <- read.csv(Path_prop)
 mat_sim = as.matrix(int_sol)
 int_sum_1 = mat_sim[,2:31]%*%prop_mat[1:30,4]
 int_sum_2 = mat_sim[,31:649]%*%prop_mat[30:648,4]
 int_sum_3 = mat_sim[,649:1386]%*%prop_mat[648:1385,4]
 int_sum_4 = mat_sim[,951:1386]%*%prop_mat[950:1385,4]
 int_sum = mat_sim[,2:1386]%*%prop_mat[1:1385,4]
-df_sum <- data.frame(time = int_sol[,1], 
+df_sum <- data.frame(time = int_sol[,1],
                      First_age_group = int_sum_1,
                      Second_age_group = int_sum_2,
                      Third_age_group = int_sum_3,
@@ -190,11 +197,11 @@ ggplot(df_sum) +
   
 #---------------------------------------------------------------------------#
 ##### REPORTS UPLOAD ###### STEP 3
-Path = "~/MAD_MODEL/MAD_MODEL/data/a000_mosquito_alert_spatio_temporal_data_D_mod_df.Rds"
+Path = "~/MAD_MODEL/SUR_MODEL/data/a000_mosquito_alert_spatio_temporal_data_D_mod_df.Rds"
 # Path = paste(PC,Path, sep="")
 
 reports = read_rds(Path) %>% filter(presence==TRUE)
-reports$date= as.Date(reports$date,"%Y-%m-%d") 
+reports$date = as.Date(reports$date,"%Y-%m-%d") 
 reports$id = 1
 reports$time = as.numeric(reports$date - as.Date(ref_date,"%Y-%m-%d") , units="days")
 reports <- reports[,c("id","date", "time")]
@@ -218,6 +225,8 @@ reports$n[reports$date > as.Date("2018-12-01" , "%Y-%m-%d") &
               reports$date < as.Date("2019-04-01" , "%Y-%m-%d")] <- 0
 reports$n[reports$date > as.Date("2019-12-01" , "%Y-%m-%d") & 
               reports$date < as.Date("2020-04-01" , "%Y-%m-%d")] <- 0
+reports$n[reports$date > as.Date("2020-12-01" , "%Y-%m-%d") & 
+            reports$date < as.Date("2021-04-01" , "%Y-%m-%d")] <- 0
 
 ggplot(reports) + 
   geom_line(aes(date, n)) +
@@ -227,12 +236,13 @@ ggplot(reports) +
   scale_x_date(date_breaks = "6 month",
                date_labels = "%b %y")+
   scale_color_manual(values = c('#32329f')) +
-  theme_bw()+
-  theme(text = element_text(size=20))
+  theme_bw()
+# +
+  # theme(text = element_text(size=20))
 
 #---------------------------------------------------------------------------#
 ###### PROPENSITY PROBABILITY UPLOAD#######
-Path_prop <- "~/MAD_MODEL/MAD_MODEL/data/propensity_predictions.csv"
+Path_prop <- "~/MAD_MODEL/SUR_MODEL/data/propensity_predictions.csv"
 prop_mat  <- read.csv(Path_prop)
 
 # File .dat of propensity probabilities.
@@ -244,14 +254,14 @@ ggplot(prop_mat)+
   xlab("Participants age (days)")+
   ylab("Probability")+
   scale_color_manual(values = c('#9E329F')) +
-  theme_bw()+
-  theme(text = element_text(size=21))
+  theme_bw() + 
+  theme(plot.margin = margin(1, 1, 1, 1, "cm"))
 
 prop_mat$group <- 0
-prop_mat$group[prop_mat$participation_time_days<=100]  <- "FIRST" 
-prop_mat$group[prop_mat$participation_time_days>100 & prop_mat$participation_time_days<=500]  <- "SECOND" 
-prop_mat$group[prop_mat$participation_time_days>500 & prop_mat$participation_time_days<=950]  <- "THIRD" 
-prop_mat$group[prop_mat$participation_time_days>950]  <- "FOURTH" 
+prop_mat$group[prop_mat$participation_time_days<=30]  <- "[0:30]" 
+prop_mat$group[prop_mat$participation_time_days>30 & prop_mat$participation_time_days<=648]  <- "(30:648]" 
+prop_mat$group[prop_mat$participation_time_days>=649]  <- ">648" 
+
 min_prop = min(prop_mat$participation_time_days)
 max_prop = max(prop_mat$participation_time_days)
 
@@ -260,7 +270,7 @@ ggplot(prop_mat) +
   xlab("Age of the participant (days)") + 
   ylab("Probability of reporting")+
   scale_x_continuous(breaks = round(seq(min_prop, max_prop, by = 100),1)) +
-  scale_color_manual(values=c('#FF00F6','#FF2C00','#00FF5E','#0092F6'))+
+  scale_color_manual(values=c('#FF00F6','#FF2C00','#00FF5E'))+
   theme(text = element_text(size=16)) + theme_bw()
 
 
@@ -274,12 +284,14 @@ rm(int_sum); rm(int_sum_1);rm(int_sum_2); rm(int_sum_3); rm(int_sum_4)
 max_int = ncol(int_sol) - 1
 max_prop = max(prop_mat[,1])
 max_l = min(c(max_int, max_prop))
+l_prop <- length(prop_mat[,2])
+l <- l_prop+1
 #---------------------------------------------------------------------------#
 ###### COMPUTE rho(M) ######## STEP 4
 rho_t <- function(t, mat){
   mat <- as.matrix(mat)
   ind <- which(mat[,1] == t)
-  den_sum <- mat[ind,2:1386]%*%prop_mat[1:1385,4]
+  den_sum <- mat[ind,2:l]%*%prop_mat[1:l_prop,4]
   if(den_sum != 0){
     ind1 <- which(reports$time == t)
     if(length(ind1) == 0){
@@ -323,12 +335,12 @@ filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/rho_sim.rds")
 saveRDS(df_rho, file = filename)
 
 # Compute Rho with observed data:
-Path = "~/MAD_MODEL/MAD_MODEL/data/Ob_data.rds"
+Path = "~/MAD_MODEL/SUR_MODEL/data/Ob_data_bcn.rds"
 ob_data <- readRDS(Path)
 df_date_ob <- ob_data[,c(1,2)]
-ob_data$date <- NULL
-t_init = max(c(min(ob_data[,1]),min(reports$time)))
-t_end = min(c(max(ob_data[,1]),max(reports$time)))
+df_date_ob$time <- df_date_ob$V1
+t_init = max(c(min(ob_data[,2]),min(reports$time)))
+t_end = min(c(max(ob_data[,2]),max(reports$time)))
 vec = c(t_init:t_end)
 rho = matrix(0,1,length(vec))
 den = matrix(0,1,length(vec))
@@ -346,13 +358,15 @@ ggplot(df_rho_ob) +
   geom_line(aes(date, rho))  +
   scale_x_date(date_breaks = "3 month",date_labels = "%b %y") +
   ylab(expression(rho))+
-  theme(text = element_text(size=14))+
+  theme(text = element_text(size=12))+
   theme_bw()
 
 filename <- paste0("~/MAD_MODEL/SUR_MODEL/Code/rho_observed.rds") 
 saveRDS(df_rho_ob, file = filename)
 #---------------------------------------------------------------------------# 
-
+#### Analize observed data #####
+sum_1 <- rowSums(ob_data[,3:53])
+sum_2 <- rowSums(ob_data[])
 # Moving average to rho:
 l = length(df_rho$rho)
 dt = 7

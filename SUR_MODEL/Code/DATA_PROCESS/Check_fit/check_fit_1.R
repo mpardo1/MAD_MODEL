@@ -10,6 +10,7 @@ library(tidyverse)
 library("readxl")
 library(reshape)
 library(viridis)
+library("ggpubr")
 
 Path = "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_DETERMINISTIC/Output_Integration_final_fit.data"
 int_sol_2 = data.frame(t(read.table(Path, header=FALSE)))
@@ -17,7 +18,7 @@ int_sol_2 = data.frame(t(read.table(Path, header=FALSE)))
 #### UPLOAD PARTICIPATION FILE #####
 # Data of participation.
 # Spain DATA:
-Path_ages = "~/MAD_MODEL/MAD_MODEL/RStudio/Fitting/data/ages_days.csv"
+Path_ages = "~/MAD_MODEL/SUR_MODEL/data/ages_days.csv"
 ages = read.csv(Path_ages)
 # Convert to data type date the registration time.
 ages$date = as.Date(ages$date,"%Y-%m-%d") 
@@ -28,17 +29,18 @@ ages$age_days = ages$age_days + 1
 
 ####UPLOAD REGISTRATION FILE ######
 # Data with registration date with hour and minute and registration ID.
-Path_reg = "~/MAD_MODEL/MAD_MODEL/RStudio/Fitting/data/register_data_tigausers.csv"
-# Mac PATH
-#Path_users = "/Users/celsaaraujobarja/Documents/PhD/SUR Model/Code/RStudio/Fitting/data/register_data_tigausers.csv"
+Path_reg = "~/MAD_MODEL/SUR_MODEL/data/ages_days_bcn.csv"
 registration = read.csv(Path_reg)
+registration <- registration %>% filter( registration$age_days == 0)
+registration$date_reg <- as.Date(registration$date,'%Y-%m-%d') 
+registration$age_days <- NULL
+ref_date = min(registration$date)
 # Convert to data type date the registration time.
-registration$date_reg = as.Date(registration$registration_time,'%Y-%m-%d %H:%M:%S') 
 # Remove the data after the update of the app.
 init_date = "2014-06-14"
-end_date = "2020-10-01"
-registration <- registration %>% filter(registration_time < as.Date(end_date,"%Y-%m-%d") )
-registration <- registration %>% filter(registration_time >= as.Date(init_date,"%Y-%m-%d") )
+end_date = max(registration$date_reg)
+registration <- registration %>% filter(date_reg < as.Date(end_date,"%Y-%m-%d") )
+registration <- registration %>% filter(date_reg >= as.Date(init_date,"%Y-%m-%d") )
 registration$boolean = 1
 # Do a group by by the day of registration.
 reg_group <- registration %>%  group_by(date_reg) %>% summarise(mean = mean(boolean), sum = sum(boolean), n = n())
@@ -206,28 +208,29 @@ ggplot(df_sum,aes(Time, value)) +
 df_join <- merge(int_sol, mat_fil, by = "X1")
 
 # First Age group:
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size=12)) + 
+    theme(legend.title = element_blank())
+)
+
 df_aux <- df_join[,c("X1","X2.y","X2.x")]
 colnames(df_aux) <- c("Time","Observed","Simulation")
 df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
-ggplot(df_plot,aes(Time, value)) + 
+# 1 day old:
+PLOT_1 <- ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "One day old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
-
+  xlab("Time (days)") 
+PLOT_1
 df_plot <- df_plot %>% filter(variable == "Observed" )
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "One day old participants") +
   scale_color_manual(values=c('#9E329F'))+
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16))
+  xlab("Time (days)") 
 
 rm(df_plot)
 rm(df_aux)
@@ -235,54 +238,39 @@ df_aux <- df_join[,c("X1","X26.y","X26.x")]
 colnames(df_aux) <- c("Time","Observed","Simulation")
 df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
-
-ggplot(df_plot,aes(Time, value)) + 
+# 25 day old:
+PLOT_2 <- ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "25 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
-
+  xlab("Time (days)") 
+PLOT_2
 df_plot <- df_plot %>% filter(variable == "Observed" )
 
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "25 days old participants") +
   scale_color_manual(values=c('#9E329F'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
+  xlab("Time (days)")
 
 # Second Age group:
 df_aux <- df_join[,c("X1","X36.y","X36.x")]
 colnames(df_aux) <- c("Time","Observed","Simulation")
 df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
-ggplot(df_plot,aes(Time, value)) + 
+# 36 day old:
+PLOT_3 <- ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "36 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
-
+  xlab("Time (days)") 
+PLOT_3
 df_plot <- df_plot %>% filter(variable == "Observed" )
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "36 days old participants") +
   scale_color_manual(values=c('#9E329F'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16))
+  xlab("Time (days)") 
 
 rm(df_plot)
 rm(df_aux)
@@ -290,42 +278,31 @@ df_aux <- df_join[,c("X1","X61.y","X61.x")]
 colnames(df_aux) <- c("Time","Observed","Simulation")
 df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
-
+# 61 day old:
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "61 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
+  xlab("Time (days)") 
 
 # Third Age group:
 df_aux <- df_join[,c("X1","X62.y","X62.x")]
 colnames(df_aux) <- c("Time","Observed","Simulation")
 df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
-ggplot(df_plot,aes(Time, value)) + 
+# 1730 day old:
+PLOT_4 <- ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "1730 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
-
+  xlab("Time (days)")
+PLOT_4
 df_plot <- df_plot %>% filter(variable == "Observed" )
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "1730 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
+  xlab("Time (days)")
 
 rm(df_plot)
 rm(df_aux)
@@ -333,16 +310,17 @@ df_aux <- df_join[,c("X1","X81.y","X81.x")]
 colnames(df_aux) <- c("Time","Observed","Simulation")
 df_plot <- reshape2::melt(df_aux, id.vars = c("Time"))
 
-
+# 1748 day old:
 ggplot(df_plot,aes(Time, value)) + 
   geom_line(aes( colour = variable))  +
-  # labs(title = "1748 days old participants") +
   scale_color_manual(values=c('#9E329F','#1642FE'))+
-  theme(text = element_text(size=20))+ 
   ylab("Number of participants")+
-  xlab("Time (days)") +
-  theme_bw()+
-  theme(text = element_text(size=16)) 
+  xlab("Time (days)")
+
+figure <- ggarrange(PLOT_1, PLOT_2, PLOT_3, PLOT_4,
+                    common.legend = TRUE, legend = "top",
+                    ncol = 2, nrow = 2)
+figure
 ###### PLOTS AGE DISTRIBUTION ######
 
 #mat_fil_t = data.frame(t(mat_fil[c(1:31),c(2:32)]))
