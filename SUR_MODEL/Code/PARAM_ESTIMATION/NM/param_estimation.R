@@ -115,7 +115,7 @@ while(condition){
   print(paste0("Iteration: ", it))
   #Ahora viene la paralelización
   parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
-    it <- it + 1
+  
     
     fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
                  devs = devs, control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
@@ -127,7 +127,7 @@ while(condition){
     
     fit
   })
-  
+  it <- it + 1
   lhs <- parall
   
   rm(parall) #Para evitar fugas de memoria

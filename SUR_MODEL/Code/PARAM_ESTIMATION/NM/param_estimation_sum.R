@@ -43,10 +43,19 @@ ll_ode <- function(x, # vector con los parámetros
     z <- as.data.frame(z)
     z <- z[-1, ]
     
-    res <- 0
-    for(i in c(1:1999)){
-      res <- res +  sum(dnorm( y[,i+1], mean = z[,i+1], sd = devs[i], log = T))
-    }
+    # Sum the columns of the ode integration:
+    sum_group1 <- rowSums(z[,2:31])
+    sum_group2 <- rowSums(z[,31:648])
+    sum_group3 <- rowSums(z[,648:2000])
+    
+    # Remove the df of solutions z:
+    rm(z)
+    
+    # Compute the LL:
+    res <- sum(dnorm( y[,1], mean = sum_group1, sd = devs[1], log = T)) + 
+      sum(dnorm( y[,2], mean = sum_group2, sd = devs[2], log = T)) + 
+      sum(dnorm( y[,3], mean = sum_group3, sd = devs[3], log = T)) 
+    
   }
   return(res)
 }
@@ -69,19 +78,30 @@ ob_data <- t(ob_data[,1:2000])
 n_inicio <- 1
 n_fin <- 2000
 
-input2 <- ob_data[n_inicio:n_fin, ]
+input2 <- matrix(0, nrow = nrow(ob_data), ncol = 3)
 
 
 # Estima desviación estandar de cada serie --------------------------------
 
 # Esto nos permite asignar una likelihood al conjunto del modelo, considerando
 # las series independientes.
+input2[,1] <- rowSums(ob_data[,2:31])
+input2[,2] <- rowSums(ob_data[,31:648])
+input2[,3] <- rowSums(ob_data[,648:2000])
 
 devs <- c()
-for(i in c(1:1999)){
-  spl <- input2[,i+1]
-  fit <- smooth.spline(x = 1:length(spl), y = spl, df = 4)
-  devs[i] <- sd(spl - predict(fit)$y)
+spl <- input2[,1]
+fit <- smooth.spline(x = 1:length(spl), y = spl, df = 4)
+devs[1] <- sd(spl - predict(fit)$y)
+
+spl <- input2[,2]
+fit <- smooth.spline(x = 1:length(spl), y = spl, df = 4)
+devs[2] <- sd(spl - predict(fit)$y)
+
+spl <- input2[,3]
+fit <- smooth.spline(x = 1:length(spl), y = spl, df = 4)
+devs[3] <- sd(spl - predict(fit)$y)
+for(i in c(1:3)){
   if(devs[i] == 0){
     devs[i] <- 0.001
   }
@@ -112,10 +132,11 @@ Cores <- 1
 # Cores <- parallel::detectCores()#Numero de cores a utilizar.
 it <- 0
 while(condition){
+  start_time <- Sys.time()
   print(paste0("Iteration: ", it))
   #Ahora viene la paralelización
   parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
-    it <- it + 1
+    
     
     fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
                  devs = devs, control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
@@ -127,7 +148,11 @@ while(condition){
     
     fit
   })
-  
+  end_time <- Sys.time()
+  diff_time <- end_time - start_time
+  print("Execution time iteration i:")
+  print(diff_time)
+  it <- it + 1
   lhs <- parall
   
   rm(parall) #Para evitar fugas de memoria

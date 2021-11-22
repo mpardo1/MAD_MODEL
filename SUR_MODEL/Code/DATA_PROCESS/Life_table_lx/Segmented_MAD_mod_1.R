@@ -9,6 +9,14 @@ library(ggplot2)
 Path = "~/MAD_MODEL/SUR_MODEL/data/participation_life_table.csv"
 life_table = read.csv(Path) 
 
+# nqx: prob of dying within the next n=7 days.
+nqx_comp <- (life_table$lx - life_table$lxn)/life_table$lx
+df_qx <- data.frame(age = life_table$x, nqx = life_table$nqx, nqx_comp)
+
+ggplot(df_qx) +
+  geom_line(aes(age, nqx))+
+  theme_bw()
+
 # Segmented does not allow referenced to the dataframe class
 lx <- life_table$lx
 x <- life_table$x
