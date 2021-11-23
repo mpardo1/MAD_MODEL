@@ -112,6 +112,7 @@ Cores <- 1
 # Cores <- parallel::detectCores()#Numero de cores a utilizar.
 it <- 0
 while(condition){
+  start_time <- Sys.time()
   print(paste0("Iteration: ", it))
   #Ahora viene la paralelización
   parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
@@ -127,6 +128,11 @@ while(condition){
     
     fit
   })
+  
+  end_time <- Sys.time()
+  diff_time <- end_time - start_time
+  print("Execution time iteration i:")
+  print(diff_time)
   it <- it + 1
   lhs <- parall
   
