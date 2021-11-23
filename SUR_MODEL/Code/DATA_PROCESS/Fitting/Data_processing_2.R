@@ -52,6 +52,8 @@ mat_ages <- cbind(replicate(nrow(mat_ages), 0), mat_ages)
 Path <- paste0( "~/PROJECT_MOSQUITO_ALERT/MODEL_CALCULATIONS/TEMPORAL_EVOLUTION_CBL_ESTIMATION/Observed_", Sys.Date() ,"_", ncol(mat_ages),".dat")
 write.table(mat_ages, Path,sep="\t",col.names = FALSE,row.names = FALSE)
 
+Path <- paste0( "~/MAD_MODEL/SUR_MODEL/data/Observed_", Sys.Date() ,"_", ncol(mat_ages),".dat")
+write.table(mat_ages, Path,sep="\t",col.names = FALSE,row.names = FALSE)
 # Create a data frame with the observed data with the time and date:
 mat_ages <- t(mat_ages)
 min_date <- min(ages$date) - 1

@@ -45,31 +45,26 @@ ll_ode <- function(x, # vector con los parámetros
   
   res <- 0
   for(i in c(1:1999)){
-    res <- res +  sum(dnorm( y[,i+1], mean = z[,i+1], sd = devs[i], log = T))
+    res <- res +  sum(dnorm(y[,i+1], mean = z[,i+1], sd = devs[i], log = T))
     }
   }
   return(res)
 }
 
 # Carga datos -------------------------------------------------------------
+
+
+# Read Observed data:
+ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/data/Observed_2021-11-23_2691.dat", header=FALSE, sep= "\t")
+
 # Registrations:
-Path = "~/MAD_MODEL/SUR_MODEL/data/Downloads_2378.data"
-down <- data.frame(t(read.table(Path, header=FALSE)))
+ob_data_t <- t(ob_data)
+down <- ob_data_t[,1:2]
 colnames(down) <- c("time", "down")
 head(down)
 forcs_mat <- data.matrix(down)
 
-# Read Observed data:
-ob_data <-read.table("~/MAD_MODEL/SUR_MODEL/data/Observed_data_2300.data", header=FALSE, sep= " ")
-ob_data <- t(ob_data[,1:2000])
-
-# n_inicio <- which(data$FECHA == f_inicio)
-# n_fin <- which(data$FECHA == f_fin)
-
-n_inicio <- 1
-n_fin <- 2000
-
-input2 <- ob_data[n_inicio:n_fin, ]
+input2 <- ob_data
 
 
 # Estima desviación estandar de cada serie --------------------------------
@@ -138,7 +133,7 @@ while(condition){
   
   rm(parall) #Para evitar fugas de memoria
   
-  filename <- paste0("~/MAD_MODEL/SUR_MODEL/OUTPUT/NM/param_MAD_MODEL_1core_900it_",Sys.Date(), "_",round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
+  filename <- paste0("~/MAD_MODEL/SUR_MODEL/OUTPUT/NM/param_MAD_MODEL_1core_900it_fulldata",Sys.Date(), "_",round, ".RData") #Salva cada ronda de optimizaciones, por si acaso
   save(lhs, file = filename)
   
   # Ahora, recuperamos la loglikelihood de cada combinación de parámetros
