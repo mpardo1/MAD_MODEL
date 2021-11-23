@@ -41,3 +41,4 @@ z <- ode(y = population,
          parms = pars, initforc = "forcc", forcings = downloads, 
          fcontrol = list(method = "constant"))
 
+z <- as.data.frame(z)
