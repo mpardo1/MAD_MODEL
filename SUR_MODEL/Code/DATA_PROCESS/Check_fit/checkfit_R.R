@@ -10,6 +10,8 @@ library("kableExtra")
 
 # Read output from param_estimation.R
 output <- load("/home/marta/Documentos/PHD/2021/SUR_Model/OUTPUT/param_MAD_MODEL_1core_900it1.RData")
+output <- load("~/Documents/PHD/2021/SUR_Model/OUTPUT/param_MAD_MODEL_1core_900it1.RData")
+
 # Number of seeds:
 N = 300
 out_mat <- matrix(0, nrow = N, ncol = 4)
@@ -108,15 +110,17 @@ for(i in c(1:10)){
       scale_color_nejm() + 
       theme_bw()
     
-    require(latex2exp)
     df_tab <- data.frame(variable = c("LL", "gamma1","gamma2","gamma3"),
                          value = mat_sort[it,])
     table.p <- ggtexttable(df_tab)
     
-    plot_get(it) <- ggarrange(table.p ,plot_1,plot_31,
+    plot <- ggarrange(table.p ,plot_1,plot_31,
                       plot_300,plot_600, plot_1500,
                common.legend = TRUE, legend="bottom")
+    path <- paste0("~/MAD_MODEL/SUR_MODEL/Code/PARAM_ESTIMATION/MH/plot_",it, ".png")
+    ggsave(path, plot= last_plot(), device = "png")
     
     print(paste("it:",it))
     plot
 }
+
