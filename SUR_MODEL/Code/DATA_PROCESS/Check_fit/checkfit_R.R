@@ -44,8 +44,16 @@ end_time <- max(ob_data[1,])
 
 # ------------------INTEGRATION --------------------------
 # Parameters:
-for(i in c(1:10)){
+for(i in c(1:100)){
     it <- i
+    
+    rm(plot_1)
+    rm(plot_31)
+    rm(plot_300)
+    rm(plot_600)
+    rm(plot_1500)
+    rm(z)
+    
     gam1 = mat_sort[it,2]
     gam2 = mat_sort[it,3]
     gam3 = mat_sort[it,4]
@@ -59,7 +67,7 @@ for(i in c(1:10)){
              fcontrol = list(method = "constant"))
     
     z <- as.data.frame(z)
-    
+
     # ----------------- 1 DAY OLD --------------------------#
     df_age1 <- data.frame( time = z$time, ob = ob_data_t[,2], sim = z$`1`) 
     df_plot <- reshape2::melt(df_age1, id.vars = c("time"))
@@ -117,7 +125,7 @@ for(i in c(1:10)){
     plot <- ggarrange(table.p ,plot_1,plot_31,
                       plot_300,plot_600, plot_1500,
                common.legend = TRUE, legend="bottom")
-    path <- paste0("~/MAD_MODEL/SUR_MODEL/Code/PARAM_ESTIMATION/MH/plot_",it, ".png")
+    path <- paste0("~/MAD_MODEL/SUR_MODEL/Code/PARAM_ESTIMATION/MH/PLOTS/plot_",it, ".png")
     ggsave(path, plot= last_plot(), device = "png")
     
     print(paste("it:",it))
