@@ -112,9 +112,16 @@ while(condition){
   #Ahora viene la paralelización
   parall <- mclapply(1:sims, mc.cores = Cores, mc.preschedule = F,function(k){
   
+    print(paste("k:",k))
+    start_time1 <- Sys.time()
     
     fit <- optim(par = seeds[, k], fn = ll_ode, forcings = down, y = input2, 
                  devs = devs, control = list(fnscale = -1, maxit = 500, parscale = seeds[, k]))
+    
+    end_time1 <- Sys.time()
+    diff_time <- end_time1 - start_time1
+    print("Execution time iteration i:")
+    print(diff_time)
     
     if((k %% 1000) == 0) {
       cat("This was seed no. ", k, "\n")
