@@ -25,3 +25,5 @@ df_age_bcn <- read_csv(Path_age)
 
 Path_life_t <- "~/MAD_MODEL/SUR_MODEL/data/participation_life_table.csv"
 df_lt <- read_csv(Path_life_t)
+
+
