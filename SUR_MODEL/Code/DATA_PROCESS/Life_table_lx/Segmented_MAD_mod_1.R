@@ -9,6 +9,130 @@ library(ggplot2)
 Path = "~/MAD_MODEL/SUR_MODEL/data/participation_life_table.csv"
 life_table = read.csv(Path) 
 
+# Quadratic fit:
+life_table_filt <- life_table[2:177,]
+ggplot(life_table_filt) +
+  geom_point(aes(x, nqx))+
+  theme_bw()
+
+y <- life_table_filt$nqx
+x <- life_table_filt$x
+x2 <- x*x
+model <- glm(y ~ x + x2)
+
+#plot x vs. y
+plot(x, y)
+
+#define x-values to use for regression line
+l_out <- 10000
+x=seq(from=0,to=1200,length.out=l_out)
+
+#use the model to predict the y-values based on the x-values
+y=predict(model,list(days=x, x2=x^2))
+
+#add the fitted regression line to the plot (lwd specifies the width of the line)
+matlines(x,y, lwd=2)
+
+df_log <- data.frame(x,y)
+df_log <- df_log[-1,]
+ggplot(life_table_filt) + 
+  geom_point(aes(x,nqx), size = 1) +
+  geom_line(data=df_log, aes(x,y), color = "#863390") + 
+  theme_bw() + xlab("Days since registration") +
+  ylab("Weekly mortality (probability)")
+
+# Quadratic fit lx:
+life_table_filt <- life_table[2:177,]
+ggplot(life_table_filt) +
+  geom_point(aes(x, lx))+
+  theme_bw()
+
+y <- life_table_filt$lx
+x <- life_table_filt$x
+model <- glm(y ~ log(x))
+
+#plot x vs. y
+plot(x, y)
+
+#define x-values to use for regression line
+l_out <- 10000
+x=seq(from=0,to=1200,length.out=l_out)
+
+#use the model to predict the y-values based on the x-values
+y=predict(model,list(days=x))
+
+#add the fitted regression line to the plot (lwd specifies the width of the line)
+matlines(x,y, lwd=2)
+
+df_log <- data.frame(x,y)
+df_log <- df_log[-1,]
+ggplot(life_table_filt) + 
+  geom_point(aes(x,lx), size = 1) +
+  # geom_line(data=df_log, aes(x,y), color = "#863390") + 
+  theme_bw() + xlab("Days since registration") +
+  ylab("Number of participants")
+
+# Geometric mean:
+max_x <-  nrow(life_table)
+x_geo <- c()
+init <- c()
+x_geo[1] <- 0
+i <- 2
+tol <-  0
+init[1] <- 0
+while(tol < max_x){
+  x_geo[i] <- x_geo[i-1] + 2^(i-2)
+  tol <- x_geo[i] + 2^(i-1)
+  # init[i] <- which(life_table$x > x_geo[i] & life_table$x < tol )
+  i <-  i + 1
+}
+# Because it starts in 0:
+x_geo <- x_geo +  1 
+
+# Function  to compute the geometric mean:
+geo_mean <- function(x){exp(mean(log(x)))} 
+mean_g <- matrix(0,length(x_geo), 4 )
+for(i in c(1:(length(x_geo)-1))){
+  init <- x_geo[i] 
+  end <- x_geo[i+1]
+  mean_g[i,] <- c(life_table$x[init], life_table$x[end],
+                geo_mean(life_table$x[init:end]),
+                geo_mean(life_table$nqx[init:end]))
+}
+
+df_mg <- as.data.frame(mean_g)
+df_mg <-  df_mg[-nrow(df_mg),]
+colnames(df_mg) <-  c("left", "right", "g_mean_int", "g_mean_prob")
+ggplot(df_mg) + 
+  geom_point(aes(g_mean_int,g_mean_prob), size = 0.8)+
+  theme_bw() + xlab("Days since registration") +
+  ylab("Mortality probability")
+
+y <- df_mg$g_mean_prob
+x <- df_mg$g_mean_int
+model <- lm(y ~ log(x))
+
+#plot x vs. y
+plot(x, y)
+
+#define x-values to use for regression line
+l_out <- 10000
+x=seq(from=0,to=1500,length.out=l_out)
+
+#use the model to predict the y-values based on the x-values
+y=predict(model,newdata=list(x=seq(from=0,to=1500,length.out=l_out)),
+          interval="confidence")
+
+#add the fitted regression line to the plot (lwd specifies the width of the line)
+matlines(x,y, lwd=2)
+
+df_log <- data.frame(x,y)
+df_log <- df_log[-1,]
+ggplot(df_mg) + 
+  geom_point(aes(g_mean_int,g_mean_prob), size = 1) +
+  geom_line(data=df_log, aes(x,fit), color = "#863390") + 
+  theme_bw() + xlab("Days since registration") +
+  ylab("Mortality probability")
 # nqx: prob of dying within the next n=7 days.
 nqx_comp <- (life_table$lx - life_table$lxn)/life_table$lx
 df_qx <- data.frame(age = life_table$x, nqx = life_table$nqx, nqx_comp)
@@ -50,7 +174,8 @@ df_plot <- reshape2::melt(model, id.vars = c("Age"))
 
 ggplot(life_table, aes(x = x, y = lx)) +
   geom_line() + theme_bw() +
-  xlab("Age of the participants")
+  # xlab("Age of the participants") +
+  ylab("People \"surviving\"")
 
 ggplot(df_plot,aes(Age, value)) +
   geom_line(aes( colour = variable)) + theme_bw() +
